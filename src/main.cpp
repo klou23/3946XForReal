@@ -69,8 +69,8 @@ void usercontrol(void) {
   // main execution loop for the user control program.
   while (1) {
     //drive
-    RightDriveVel = controller1.Axis2.value();
-    LeftDriveVel = controller1.Axis3.value();
+    RightDriveVel = controller1.Axis2.value() * 0.8;
+    LeftDriveVel = controller1.Axis3.value() * 0.8;
     //right drive
     rightFrontDrive.spin(directionType::fwd, RightDriveVel, velocityUnits::pct);
     rightBackDrive.spin(directionType::fwd, RightDriveVel, velocityUnits::pct);
@@ -86,8 +86,8 @@ void usercontrol(void) {
     }else if(controller1.ButtonR2.pressing()){
       //lift down
       if(leftLiftMotor.position(rotationUnits::deg)>-30){
-        rightLiftMotor.spin(directionType::rev, 35, velocityUnits::pct);
-        leftLiftMotor.spin(directionType::rev, 35, velocityUnits::pct);
+        rightLiftMotor.spin(directionType::rev, 100, velocityUnits::pct);
+        leftLiftMotor.spin(directionType::rev, 100, velocityUnits::pct);
       }else{
         rightLiftMotor.spin(directionType::rev, 100, velocityUnits::pct);
         leftLiftMotor.spin(directionType::rev, 100, velocityUnits::pct);
@@ -105,7 +105,7 @@ void usercontrol(void) {
       clawMotor.rotateTo(-55,rotationUnits::deg, 50, velocityUnits::pct, false);
     }else if(controller1.ButtonL2.pressing()){
       //claw close
-      clawMotor.rotateTo(10,rotationUnits::deg, 50, velocityUnits::pct, false);
+      clawMotor.rotateTo(15,rotationUnits::deg, 50, velocityUnits::pct, false);
     }
 
     //rollers
