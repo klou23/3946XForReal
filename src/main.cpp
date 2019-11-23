@@ -102,10 +102,10 @@ void usercontrol(void) {
     //claw
     if(controller1.ButtonL1.pressing()){
       //claw open
-      clawMotor.rotateTo(-55,rotationUnits::deg, 50, velocityUnits::pct, false);
+      clawMotor.rotateTo(-68,rotationUnits::deg, 35, velocityUnits::pct, false);
     }else if(controller1.ButtonL2.pressing()){
       //claw close
-      clawMotor.rotateTo(15,rotationUnits::deg, 50, velocityUnits::pct, false);
+      clawMotor.rotateTo(12,rotationUnits::deg, 50, velocityUnits::pct, false);
     }
 
     //rollers
