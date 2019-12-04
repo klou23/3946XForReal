@@ -27,14 +27,15 @@ using namespace vex;
 competition Competition;
 
 //global instances of motors and other devices here
-vex::motor leftFrontDrive(vex::PORT12, vex::gearSetting::ratio18_1, false);
-vex::motor rightFrontDrive(vex::PORT11, vex::gearSetting::ratio18_1, true);
+//vex::motor leftFrontDrive(vex::PORT12, vex::gearSetting::ratio18_1, false);
+//vex::motor rightFrontDrive(vex::PORT11, vex::gearSetting::ratio18_1, true);
 vex::motor leftBackDrive(vex::PORT2, vex::gearSetting::ratio18_1, false);
 vex::motor rightBackDrive(vex::PORT7, vex::gearSetting::ratio18_1, true);
 vex::motor rightLiftMotor(vex::PORT1, vex::gearSetting::ratio36_1, false);
 vex::motor leftLiftMotor(vex::PORT20, vex::gearSetting::ratio36_1, true);
 vex::motor clawMotor(vex::PORT21, vex::gearSetting::ratio18_1, false);
-vex::motor rollerMotor(vex::PORT10, vex::gearSetting::ratio18_1, false);
+vex::motor leftRollerMotor(vex::PORT12, vex::gearSetting::ratio18_1, false);
+vex::motor rightRollerMotor(vex::PORT3, vex::gearSetting::ratio18_1, true);
 vex::controller controller1 = vex::controller();
 
 /*---------------------------------------------------------------------------*/
@@ -45,8 +46,10 @@ void pre_auton(void) {
   // Initializing Robot Configuration. DO NOT REMOVE!
   vexcodeInit();
 
-  // All activities that occur before the competition starts
-  // Example: clearing encoders, setting servo positions, ...
+  clawMotor.spin(directionType::rev, 30, velocityUnits::pct);
+  wait(100, msec);
+  clawMotor.resetRotation();
+
 }
 
 /*---------------------------------------------------------------------------*/
@@ -54,9 +57,7 @@ void pre_auton(void) {
 /*---------------------------------------------------------------------------*/
 
 void autonomous(void) {
-  // ..........................................................................
-  // Insert autonomous user code here.
-  // ..........................................................................
+  //Paste code in
 }
 
 /*---------------------------------------------------------------------------*/
@@ -72,10 +73,10 @@ void usercontrol(void) {
     RightDriveVel = controller1.Axis2.value() * 0.8;
     LeftDriveVel = controller1.Axis3.value() * 0.8;
     //right drive
-    rightFrontDrive.spin(directionType::fwd, RightDriveVel, velocityUnits::pct);
+    //rightFrontDrive.spin(directionType::fwd, RightDriveVel, velocityUnits::pct);
     rightBackDrive.spin(directionType::fwd, RightDriveVel, velocityUnits::pct);
     //left drive
-    leftFrontDrive.spin(directionType::fwd, LeftDriveVel, velocityUnits::pct);
+    //leftFrontDrive.spin(directionType::fwd, LeftDriveVel, velocityUnits::pct);
     leftBackDrive.spin(directionType::fwd, LeftDriveVel, velocityUnits::pct);
 
     //lift
@@ -100,16 +101,25 @@ void usercontrol(void) {
     }
 
     //claw
-    if(controller1.ButtonL1.pressing()){
+    if(controller1.ButtonUp.pressing()){
       //claw open
       clawMotor.rotateTo(-68,rotationUnits::deg, 35, velocityUnits::pct, false);
-    }else if(controller1.ButtonL2.pressing()){
+    }else if(controller1.ButtonDown.pressing()){
       //claw close
-      clawMotor.rotateTo(12,rotationUnits::deg, 50, velocityUnits::pct, false);
+      clawMotor.rotateTo(19,rotationUnits::deg, 80, velocityUnits::pct, false);
     }
 
     //rollers
-      //rollerMotor.spin(directionType::fwd, 75, velocityUnits::pct);
+    if(controller1.ButtonL1.pressing()){
+      leftRollerMotor.spin(directionType::fwd, 75, velocityUnits::pct);
+      rightRollerMotor.spin(directionType::fwd, 75, velocityUnits::pct);
+    }else if(controller1.ButtonL2.pressing()){
+      rightRollerMotor.spin(directionType::rev, 75, velocityUnits::pct);
+      leftRollerMotor.spin(directionType::rev, 75, velocityUnits::pct);
+    }else{
+      leftRollerMotor.stop();
+      rightRollerMotor.stop();
+    }
 
     wait(20, msec); // Sleep the task to save resources
   }
