@@ -100,6 +100,32 @@ void usercontrol(void) {
     //leftFrontDrive.spin(directionType::fwd, LeftDriveVel, velocityUnits::pct);
     leftBackDrive.spin(directionType::fwd, LeftDriveVel, velocityUnits::pct);
 
+    if(controller1.ButtonX.pressing()){
+      rightLiftMotor.rotateFor(directionType::fwd, 80, rotationUnits::deg, false);
+      leftLiftMotor.rotateFor(directionType::fwd, 80, rotationUnits::deg, false); 
+      wait(240, msec);
+
+      int degrees = 500; //drive forward to scoring zone
+
+      leftBackDrive.rotateFor(directionType::fwd, degrees, rotationUnits::deg, false);
+      rightBackDrive.rotateFor(directionType::fwd, degrees, rotationUnits::deg, false);
+      wait(degrees*3, msec);
+
+      degrees = 50; 
+      rightLiftMotor.rotateFor(directionType::rev, degrees, rotationUnits::deg, false);
+      leftLiftMotor.rotateFor(directionType::rev, degrees, rotationUnits::deg, false); 
+      wait(degrees*3, msec);
+
+      clawMotor.rotateTo(-68,rotationUnits::deg, 20, velocityUnits::pct, true);
+
+      leftRollerMotor.spin(directionType::fwd, 10, velocityUnits::pct);
+      rightRollerMotor.spin(directionType::fwd, 10, velocityUnits::pct);
+
+      leftBackDrive.rotateFor(directionType::rev, 500, rotationUnits::deg, false);
+      rightBackDrive.rotateFor(directionType::rev, 500, rotationUnits::deg, false);
+      wait(1000, msec);
+    }
+
     //lift
     if(controller1.ButtonR1.pressing()){
       //lift up
