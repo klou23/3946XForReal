@@ -45,11 +45,6 @@ vex::controller controller1 = vex::controller();
 void pre_auton(void) {
   // Initializing Robot Configuration. DO NOT REMOVE!
   vexcodeInit();
-
-  clawMotor.spin(directionType::rev, 30, velocityUnits::pct);
-  wait(100, msec);
-  clawMotor.resetRotation();
-
 }
 
 /*---------------------------------------------------------------------------*/
@@ -58,6 +53,31 @@ void pre_auton(void) {
 
 void autonomous(void) {
   //Paste code in
+
+  rightLiftMotor.rotateFor(directionType::fwd, 30, rotationUnits::deg, false);
+  leftLiftMotor.rotateFor(directionType::fwd, 30, rotationUnits::deg, false); 
+  wait(150, msec);
+
+  int degrees = 1000; //drive forward to scoring zone
+
+  leftBackDrive.rotateFor(directionType::fwd, degrees, rotationUnits::deg, false);
+  rightBackDrive.rotateFor(directionType::fwd, degrees, rotationUnits::deg, false);
+  wait(degrees*3, msec);
+
+  degrees = 50; 
+  rightLiftMotor.rotateFor(directionType::rev, degrees, rotationUnits::deg, false);
+  leftLiftMotor.rotateFor(directionType::rev, degrees, rotationUnits::deg, false); 
+  wait(degrees*3, msec);
+
+  clawMotor.rotateTo(-68,rotationUnits::deg, 20, velocityUnits::pct, true);
+
+  leftRollerMotor.spin(directionType::fwd, 10, velocityUnits::pct);
+  rightRollerMotor.spin(directionType::fwd, 10, velocityUnits::pct);
+
+  leftBackDrive.rotateFor(directionType::rev, 500, rotationUnits::deg, false);
+  rightBackDrive.rotateFor(directionType::rev, 500, rotationUnits::deg, false);
+
+
 }
 
 /*---------------------------------------------------------------------------*/
@@ -65,6 +85,7 @@ void autonomous(void) {
 /*---------------------------------------------------------------------------*/
 
 void usercontrol(void) {
+  bool clawClose = true;
   double RightDriveVel;
   double LeftDriveVel;
   // main execution loop for the user control program.
@@ -102,13 +123,15 @@ void usercontrol(void) {
 
     //claw
     if(controller1.ButtonUp.pressing()){
-      //claw open
-      clawMotor.rotateTo(-68,rotationUnits::deg, 35, velocityUnits::pct, false);
-    }else if(controller1.ButtonDown.pressing()){
       //claw close
-      clawMotor.rotateTo(19,rotationUnits::deg, 80, velocityUnits::pct, false);
+      
+      clawClose=true;
+    }else if(controller1.ButtonDown.pressing()){
+      //claw open
+      clawClose=false;
     }
-
+    if(clawClose)clawMotor.spin(directionType::fwd, 40, velocityUnits::pct);
+    else clawMotor.rotateTo(-100, rotationUnits::deg, 20, velocityUnits::pct, false);
     //rollers
     if(controller1.ButtonL1.pressing()){
       leftRollerMotor.spin(directionType::fwd, 75, velocityUnits::pct);
