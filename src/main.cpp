@@ -54,30 +54,108 @@ void pre_auton(void) {
 void autonomous(void) {
   //Paste code in
 
-  rightLiftMotor.rotateFor(directionType::fwd, 30, rotationUnits::deg, false);
-  leftLiftMotor.rotateFor(directionType::fwd, 30, rotationUnits::deg, false); 
-  wait(300, msec);
+    //red
+    //lift up
+      rightLiftMotor.spin(directionType::fwd, 80, velocityUnits::pct);
+      leftLiftMotor.spin(directionType::fwd, 80, velocityUnits::pct); 
+      wait(500, msec);
+      rightLiftMotor.stop(hold);
+      leftLiftMotor.stop(hold);
 
-  int degrees = 1000; //drive forward to scoring zone
+      int degrees = 350;
 
-  leftBackDrive.rotateFor(directionType::fwd, degrees, rotationUnits::deg, false);
-  rightBackDrive.rotateFor(directionType::fwd, degrees, rotationUnits::deg, false);
-  wait(degrees*5, msec);
+      //claw close
+      clawMotor.rotateTo(-30, rotationUnits::deg, 20, velocityUnits::pct, false);
 
-  degrees = 75; 
-  rightLiftMotor.rotateFor(directionType::rev, degrees, rotationUnits::deg, false);
-  leftLiftMotor.rotateFor(directionType::rev, degrees, rotationUnits::deg, false); 
-  wait(degrees*5, msec);
+      //drive forward
+      leftBackDrive.rotateFor(directionType::fwd, degrees, rotationUnits::deg, false);
+      rightBackDrive.rotateFor(directionType::fwd, degrees, rotationUnits::deg, false);
+      wait(degrees*5, msec);
 
-  clawMotor.rotateTo(-68,rotationUnits::deg, 20, velocityUnits::pct, true);
+      //back away
+      leftBackDrive.spin(directionType::rev, 50, velocityUnits::pct);
+      rightBackDrive.spin(directionType::rev, 50, velocityUnits::pct);
+      wait(500, msec);
+      leftBackDrive.stop();
+      rightBackDrive.stop();
 
-  leftRollerMotor.spin(directionType::fwd, 10, velocityUnits::pct);
-  rightRollerMotor.spin(directionType::fwd, 10, velocityUnits::pct);
+      //turn
+      leftBackDrive.spin(directionType::fwd, 25, velocityUnits::pct);
+      rightBackDrive.spin(directionType::rev, 25, velocityUnits::pct);
+      wait(800, msec);
+      leftBackDrive.stop();
+      rightBackDrive.stop();
 
-  leftBackDrive.rotateFor(directionType::rev, 500, rotationUnits::deg, false);
-  rightBackDrive.rotateFor(directionType::rev, 500, rotationUnits::deg, false);
+      //spin rollers
+      leftRollerMotor.spin(directionType::fwd, 75, velocityUnits::pct);
+      rightRollerMotor.spin(directionType::fwd, 75, velocityUnits::pct);
 
+      //go forward
+      leftBackDrive.spin(directionType::fwd, 50, velocityUnits::pct);
+      rightBackDrive.spin(directionType::fwd, 50, velocityUnits::pct);
+      wait(1000, msec);
+      leftBackDrive.stop();
+      rightBackDrive.stop();
 
+      //turn right to head for goblet
+      leftBackDrive.spin(directionType::fwd, 25, velocityUnits::pct);
+      rightBackDrive.spin(directionType::rev, 25, velocityUnits::pct);
+      wait(1100, msec);
+      leftBackDrive.stop();
+      rightBackDrive.stop();
+
+      //go forward
+      leftBackDrive.spin(directionType::fwd, 50, velocityUnits::pct);
+      rightBackDrive.spin(directionType::fwd, 50, velocityUnits::pct);
+      wait(200, msec);
+      //reverse rollers
+      leftRollerMotor.spin(directionType::rev, 50, velocityUnits::pct);
+      rightRollerMotor.spin(directionType::rev, 50, velocityUnits::pct);
+      //continue forward
+      wait(1550, msec);
+      leftBackDrive.stop();
+      rightBackDrive.stop();
+
+      //lift down
+      rightLiftMotor.spin(directionType::rev, 100, velocityUnits::pct);
+      leftLiftMotor.spin(directionType::rev, 100, velocityUnits::pct); 
+      wait(1000, msec);
+      rightLiftMotor.stop(hold);
+      leftLiftMotor.stop(hold);
+
+      //lift up
+      rightLiftMotor.spin(directionType::fwd, 80, velocityUnits::pct);
+      leftLiftMotor.spin(directionType::fwd, 80, velocityUnits::pct); 
+      wait(1150, msec);
+      rightLiftMotor.stop(hold);
+      leftLiftMotor.stop(hold);
+
+      //turn right to get to goblet
+      leftBackDrive.spin(directionType::fwd, 25, velocityUnits::pct);
+      rightBackDrive.spin(directionType::rev, 25, velocityUnits::pct);
+      wait(900, msec);
+      leftBackDrive.stop();
+      rightBackDrive.stop();
+
+      //go forward
+      leftBackDrive.spin(directionType::fwd, 50, velocityUnits::pct);
+      rightBackDrive.spin(directionType::fwd, 50, velocityUnits::pct);
+      wait(950, msec);
+      leftBackDrive.stop();
+      rightBackDrive.stop();
+
+      //claw open
+      clawMotor.rotateTo(250, rotationUnits::deg, 100, velocityUnits::pct, true);
+
+      //back away
+      leftBackDrive.spin(directionType::rev, 50, velocityUnits::pct);
+      rightBackDrive.spin(directionType::rev, 50, velocityUnits::pct);
+      wait(1000, msec);
+      leftBackDrive.stop();
+      rightBackDrive.stop();
+
+      rightRollerMotor.stop();
+      leftRollerMotor.stop();
 }
 
 /*---------------------------------------------------------------------------*/
@@ -99,60 +177,6 @@ void usercontrol(void) {
     //left drive
     //leftFrontDrive.spin(directionType::fwd, LeftDriveVel, velocityUnits::pct);
     leftBackDrive.spin(directionType::fwd, LeftDriveVel, velocityUnits::pct);
-
-    if(controller1.ButtonX.pressing()){
-      rightLiftMotor.rotateFor(directionType::fwd, 80, rotationUnits::deg, false);
-      leftLiftMotor.rotateFor(directionType::fwd, 80, rotationUnits::deg, false); 
-      wait(500, msec);
-
-      int degrees = 300; //drive forward to scoring zone
-
-      leftBackDrive.rotateFor(directionType::fwd, degrees, rotationUnits::deg, false);
-      rightBackDrive.rotateFor(directionType::fwd, degrees, rotationUnits::deg, false);
-      wait(degrees*5, msec);
-
-      leftBackDrive.spin(directionType::rev, 25, velocityUnits::pct);
-      rightBackDrive.spin(directionType::rev, 25, velocityUnits::pct);
-      wait(1000, msec);
-      leftBackDrive.stop();
-      rightBackDrive.stop();
-
-      leftBackDrive.spin(directionType::fwd, 25, velocityUnits::pct);
-      rightBackDrive.spin(directionType::rev, 25, velocityUnits::pct);
-      wait(800, msec);
-      leftBackDrive.stop();
-      rightBackDrive.stop();
-
-
-      leftRollerMotor.spin(directionType::fwd, 75, velocityUnits::pct);
-      rightRollerMotor.spin(directionType::fwd, 75, velocityUnits::pct);
-
-      leftBackDrive.spin(directionType::fwd, 25, velocityUnits::pct);
-      rightBackDrive.spin(directionType::fwd, 25, velocityUnits::pct);
-      wait(2000, msec);
-      leftBackDrive.stop();
-      rightBackDrive.stop();
-
-      rightLiftMotor.spin(directionType::rev, 100, velocityUnits::pct);
-      leftLiftMotor.spin(directionType::rev, 100, velocityUnits::pct); 
-      wait(500, msec);
-
-      rightLiftMotor.rotateFor(directionType::fwd, 100, rotationUnits::deg, false);
-      leftLiftMotor.rotateFor(directionType::fwd, 100, rotationUnits::deg, false); 
-      wait(2000, msec);
-
-      leftBackDrive.spin(directionType::fwd, 25, velocityUnits::pct);
-      rightBackDrive.spin(directionType::rev, 25, velocityUnits::pct);
-      wait(1500, msec);
-      leftBackDrive.stop();
-      rightBackDrive.stop();
-
-      leftBackDrive.spin(directionType::fwd, 25, velocityUnits::pct);
-      rightBackDrive.spin(directionType::fwd, 25, velocityUnits::pct);
-      wait(3000, msec);
-      leftBackDrive.stop();
-      rightBackDrive.stop();
-    }
 
     //lift
     if(controller1.ButtonR1.pressing()){
@@ -184,9 +208,12 @@ void usercontrol(void) {
       clawClose=false;
     }
     if(clawClose){
-      clawMotor.spin(directionType::fwd, 50, velocityUnits::pct);
-      clawMotor.setRotation(0, rotationUnits::deg);
-      Brain.Screen.clearScreen();
+      clawMotor.rotateTo(-30, rotationUnits::deg, 20, velocityUnits::pct, false);
+    }else{
+      clawMotor.rotateTo(250, rotationUnits::deg, 100, velocityUnits::pct, false);
+    }
+
+    Brain.Screen.clearScreen();
       Brain.Screen.setCursor(2, 2);
       Brain.Screen.print(clawMotor.temperature(temperatureUnits::fahrenheit));
       if(clawMotor.temperature(temperatureUnits::fahrenheit) > 140){
@@ -195,10 +222,9 @@ void usercontrol(void) {
         Brain.Screen.drawCircle(240, 120, 100, 39);
       }else if(clawMotor.temperature(temperatureUnits::fahrenheit) > 100){
         Brain.Screen.drawCircle(240, 120, 100, 55);
+      }else{
+        Brain.Screen.drawCircle(240, 120, 100, 95);
       }
-    }else{
-      clawMotor.rotateTo(-100, rotationUnits::deg, 100, velocityUnits::pct, false);
-    }
 
     //rollers
     if(controller1.ButtonL1.pressing()){
