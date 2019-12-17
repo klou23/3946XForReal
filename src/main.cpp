@@ -29,7 +29,7 @@ vex::motor lift2(vex::PORT4, vex::gearSetting::ratio36_1, true);
 vex::motor lift3(vex::PORT5, vex::gearSetting::ratio36_1, true);
 vex::motor leftRoller(vex::PORT6, vex::gearSetting::ratio36_1, false);
 vex::motor rightRoller(vex::PORT7, vex::gearSetting::ratio36_1, false);
-vex::motor shifter(vex::PORT8, vex::gearSetting::ratio36_1, false);
+vex::motor shifter(vex::PORT8, vex::gearSetting::ratio18_1, true);
 vex::controller controller1 = vex::controller();
 
 /*---------------------------------------------------------------------------*/
@@ -169,16 +169,12 @@ void rollerStop(void){
 }
 
 void shifterUp(void){
-  shifter.spin(directionType::fwd, 50, velocityUnits::pct);
-  wait(300, msec);
-  shifter.spin(directionType::fwd, 15, velocityUnits::pct);
-  wait(300, msec);
+  shifter.rotateTo(157, rotationUnits::deg, 15, velocityUnits::pct, true);
   shifter.stop(hold);
 }
 
 void shifterDown(void){
-  shifter.spin(directionType::rev, 75, velocityUnits::pct);
-  wait(300, msec);
+  shifter.rotateTo(0, rotationUnits::deg, 50, velocityUnits::pct, true);
   shifter.stop();
 }
 
