@@ -247,9 +247,9 @@ void usercontrol(void) {
 
     //lift
     if(controller1.ButtonR1.pressing()){
-      liftUp(100);
+      liftUp(75);
     }else if(controller1.ButtonR2.pressing()){
-      liftDown(100);
+      liftDown(75);
     }else{
       liftStop();
     }
