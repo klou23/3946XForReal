@@ -27,9 +27,9 @@ vex::motor rightDrive(vex::PORT2, vex::gearSetting::ratio18_1, true);
 vex::motor lift1(vex::PORT3, vex::gearSetting::ratio36_1, false);
 vex::motor lift2(vex::PORT4, vex::gearSetting::ratio36_1, true);
 vex::motor lift3(vex::PORT5, vex::gearSetting::ratio36_1, true);
-vex::motor leftRoller(vex::PORT6, vex::gearSetting::ratio36_1, false);
-vex::motor rightRoller(vex::PORT7, vex::gearSetting::ratio36_1, false);
-vex::motor shifter(vex::PORT8, vex::gearSetting::ratio18_1, true);
+vex::motor leftRoller(vex::PORT12, vex::gearSetting::ratio36_1, false);
+vex::motor rightRoller(vex::PORT11, vex::gearSetting::ratio36_1, true);
+vex::motor shifter(vex::PORT13, vex::gearSetting::ratio18_1, true);
 vex::controller controller1 = vex::controller();
 
 /*---------------------------------------------------------------------------*/
@@ -159,23 +159,21 @@ void rollerIntake(double speed){
 }
 
 void rollerExtake(double speed){
-  leftRoller.spin(directionType::fwd, speed, velocityUnits::pct);
-  rightRoller.spin(directionType::fwd, speed, velocityUnits::pct);
+  leftRoller.spin(directionType::rev, speed, velocityUnits::pct);
+  rightRoller.spin(directionType::rev, speed, velocityUnits::pct);
 }
 
 void rollerStop(void){
-  leftRoller.stop();
-  rightRoller.stop();
+  leftRoller.stop(hold);
+  rightRoller.stop(hold);
 }
 
 void shifterUp(void){
-  shifter.rotateTo(157, rotationUnits::deg, 15, velocityUnits::pct, true);
-  shifter.stop(hold);
+  shifter.rotateTo(-370, rotationUnits::deg, 15, velocityUnits::pct, false);
 }
 
 void shifterDown(void){
-  shifter.rotateTo(0, rotationUnits::deg, 50, velocityUnits::pct, true);
-  shifter.stop();
+  shifter.rotateTo(0, rotationUnits::deg, 15, velocityUnits::pct, false);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -261,6 +259,10 @@ void usercontrol(void) {
       rollerExtake(100);
     }else{
       rollerStop();
+    }
+
+    if(shifter.position(rotationUnits::deg) > 380){
+      shifter.rotateTo(380, rotationUnits::deg, 10, velocityUnits::pct, false);
     }
 
     //shifter
