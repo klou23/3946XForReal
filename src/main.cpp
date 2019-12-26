@@ -42,6 +42,9 @@ vex::controller controller1 = vex::controller();
   2. Red 4 cube line (4 points)
   3. Blue 1 cube and 4 cube stack (5 points)
   4. Red 1 cube and 4 cube stack (5 points)
+
+  Driver skills:
+  10. cool programming skills thing
 */
 
 int Auton = 1;
@@ -246,6 +249,65 @@ void autonomous(void) {
     drive(1000, 50);
     shifterUp();
     drive(250, -50);
+    shifterDown();
+  }else if(Auton == 10){
+    rollerIntake(100);
+    wait(250, msec);
+    rollerExtake(100);
+    wait(250, msec);
+    rollerStop();
+    liftUpFor(300, 100);
+    drive(400, 100);
+    liftDownFor(300, 100);
+    rollerExtake(100);
+    wait(250, msec);
+    rollerStop();
+    drive(400, -100);
+    turnCCW(100, 100);
+    rollerIntake(85);
+    drive(750, 100);
+    rollerStop();
+    drive(50, -100);
+    turnCCW(80, 100);
+    liftUpFor(500, 100);
+    drive(50, 100);
+    rollerExtake(80);
+    wait(250, msec);
+    rollerStop();
+    drive(50, -100);
+    liftDownFor(500, 100);
+    turnCW(80, 100);
+    rollerIntake(85);
+    drive(700, 100);
+    rollerStop();
+    turnCW(100, 100);
+    drive(200, 100);
+    shifterUp();
+    drive(50, 100);
+    turnCW(250, 100);
+    rollerIntake(85);
+    drive(500, 100);
+    drive(50, -100);
+    rollerStop();
+    turnCCW(350, 100);
+    liftUpFor(300, 100);
+    drive(100, 100);
+    rollerExtake(90);
+    wait(250, msec);
+    rollerStop();
+    drive(50, -100);
+    turnCCW(50, 100);
+    drive(200, 100);
+    turnCCW(200, 100);
+    drive(600, 100);
+    turnCCW(200, 100);
+    rollerIntake(90);
+    drive(1200, 100);
+    rollerStop();
+    turnCW(200, 100);
+    drive(700, 100);
+    shifterUp();
+    drive(100, -100);
     shifterDown();
   }
 }
