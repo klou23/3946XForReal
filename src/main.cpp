@@ -20,16 +20,14 @@ using namespace vex;
 competition Competition;
 
 //global instances of motors and other devices here
-//vex::motor leftFrontDrive(vex::PORT12, vex::gearSetting::ratio18_1, false);
-//vex::motor rightFrontDrive(vex::PORT11, vex::gearSetting::ratio18_1, true);
 vex::motor leftDrive(vex::PORT18, vex::gearSetting::ratio18_1, false);
 vex::motor rightDrive(vex::PORT19, vex::gearSetting::ratio18_1, true);
-vex::motor lift1(vex::PORT1, vex::gearSetting::ratio36_1, true);
+vex::motor lift1(vex::PORT17, vex::gearSetting::ratio36_1, true);
 vex::motor lift2(vex::PORT10, vex::gearSetting::ratio36_1, false);
-vex::motor lift3(vex::PORT9, vex::gearSetting::ratio36_1, false);
+vex::motor lift3(vex::PORT1, vex::gearSetting::ratio36_1, false);
 vex::motor leftRoller(vex::PORT5, vex::gearSetting::ratio36_1, false);
 vex::motor rightRoller(vex::PORT4, vex::gearSetting::ratio36_1, true);
-vex::motor shifter(vex::PORT7, vex::gearSetting::ratio36_1, true);
+vex::motor shifter(vex::PORT8, vex::gearSetting::ratio36_1, true);
 vex::controller controller1 = vex::controller();
 
 /*---------------------------------------------------------------------------*/
@@ -50,7 +48,7 @@ vex::controller controller1 = vex::controller();
 int Auton = 1;
 
 motor motorArray[8] = {leftDrive, rightDrive, lift1, lift2, lift3, leftRoller, rightRoller, shifter};
-std::string motorNames[8] = {"Left Drive", "Right Drive", "Left Lift", "Top Right Lift", "Bottom Right Lift", "Left Roller", "Right Roller", "Shifter"};
+std::string motorNames[8] = {"Left Drive", "Right Drive", "Left Lift", "Bottom Right Lift", "Top Right Lift", "Left Roller", "Right Roller", "Shifter"};
 
 double rightDriveVel = 0;
 double leftDriveVel = 0;
@@ -62,8 +60,8 @@ double shifterSpeed;
 /*---------------------------------------------------------------------------*/
 
 void controllerDrive(void){
-  rightDriveVel = controller1.Axis2.value() * 0.8 * 0.5;
-  leftDriveVel = controller1.Axis3.value() * 0.8 * 0.5;
+  rightDriveVel = controller1.Axis2.value() * 0.8;
+  leftDriveVel = controller1.Axis3.value() * 0.8;
   rightDrive.spin(directionType::fwd, rightDriveVel, velocityUnits::pct);
   leftDrive.spin(directionType::fwd, leftDriveVel, velocityUnits::pct);
 }
@@ -173,29 +171,20 @@ void rollerStop(void){
   rightRoller.stop(hold);
 }
 
-void shifterUp(void){
-  
-  // distance = 265;
-  // while( distance >= 20){
-  //   distance = 265 - abs((int)shifter.position(rotationUnits::deg));
-  //   shifterSpeed = 100 * (distance/265);
-  //   shifter.spin(directionType::fwd, shifterSpeed, velocityUnits::pct);
-  //   Brain.Screen.clearScreen();
-  //   Brain.Screen.setCursor(1, 1);
-  //   Brain.Screen.print(distance);
-  // }
-  // shifter.stop();
-
-  
-  // shifter.rotateTo(-150, rotationUnits::deg, 100, velocityUnits::pct, false);
-  // shifter.rotateTo(-370, rotationUnits::deg, 15, velocityUnits::pct);
-
-  shifter.spin(directionType::rev, 15, velocityUnits::pct);
-  
-}
-
 void shifterDown(void){
   shifter.rotateTo(0, rotationUnits::deg, 15, velocityUnits::pct, false);
+}
+
+void shifterUp(void){
+  
+  distance = 183;
+  while(distance >= 10){
+    distance = abs(183 - abs((int)shifter.position(rotationUnits::deg)));
+    shifterSpeed = 100 * (distance/265);
+    shifter.spin(directionType::rev, shifterSpeed, velocityUnits::pct);
+  }
+  shifter.stop(hold);
+
 }
 
 /*---------------------------------------------------------------------------*/
@@ -328,7 +317,7 @@ void usercontrol(void) {
     if(controller1.ButtonR1.pressing()){
       liftUp(100);
     }else if(controller1.ButtonR2.pressing()){
-      liftDown(75);
+      liftDown(100);
     }else{
       liftStop();
     }
@@ -344,13 +333,9 @@ void usercontrol(void) {
 
     //shifter
     if(controller1.ButtonUp.pressing()){
-     //shifterUp();
-     shifter.spin(directionType::fwd, 15, velocityUnits::pct);
+      shifterUp();
     }else if(controller1.ButtonDown.pressing()){
-      //shifterDown();
-      shifter.spin(directionType::rev, 15, velocityUnits::pct);
-    }else{
-      shifter.stop(hold);
+      shifterDown();
     }
 
     //motor temp stuff
