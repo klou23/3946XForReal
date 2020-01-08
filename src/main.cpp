@@ -54,6 +54,7 @@ double rightDriveVel = 0;
 double leftDriveVel = 0;
 double distance;
 double shifterSpeed;
+bool shifterGoingUp = false;
 
 /*---------------------------------------------------------------------------*/
 /*                                Functions                                  */
@@ -333,9 +334,26 @@ void usercontrol(void) {
 
     //shifter
     if(controller1.ButtonUp.pressing()){
-      shifterUp();
+      shifterGoingUp = true;
     }else if(controller1.ButtonDown.pressing()){
-      shifterDown();
+      shifterGoingUp = false;
+    }
+
+    if(shifterGoingUp){
+      distance = abs(210 - abs((int)shifter.position(rotationUnits::deg)));
+      if(distance >= 10){
+        if(shifter.position(rotationUnits::deg) < 75){
+          shifterSpeed = 100;
+        }else {
+          shifterSpeed = 20 * (distance/210);
+        }
+        shifter.spin(directionType::rev, shifterSpeed, velocityUnits::pct);
+        //rollerExtake(20);
+      }else{
+        shifter.stop(hold);
+      }
+    }else{
+      shifter.rotateTo(0, rotationUnits::deg, 15, velocityUnits::pct, false);
     }
 
     //motor temp stuff
@@ -347,7 +365,7 @@ void usercontrol(void) {
       }
     }
 
-    wait(20, msec); // Sleep the task to save resources
+    wait(5, msec); // Sleep the task to save resources
   }
 }
 
