@@ -24,9 +24,9 @@ vex::motor leftDrive(vex::PORT18, vex::gearSetting::ratio18_1, false);
 vex::motor rightDrive(vex::PORT19, vex::gearSetting::ratio18_1, true);
 vex::motor lift1(vex::PORT17, vex::gearSetting::ratio36_1, true);
 vex::motor lift2(vex::PORT10, vex::gearSetting::ratio36_1, false);
-vex::motor lift3(vex::PORT1, vex::gearSetting::ratio36_1, false);
-vex::motor leftRoller(vex::PORT5, vex::gearSetting::ratio36_1, false);
-vex::motor rightRoller(vex::PORT4, vex::gearSetting::ratio36_1, true);
+vex::motor lift3(vex::PORT6, vex::gearSetting::ratio36_1, false);
+vex::motor leftRoller(vex::PORT2, vex::gearSetting::ratio36_1, false);
+vex::motor rightRoller(vex::PORT3, vex::gearSetting::ratio36_1, true);
 vex::motor shifter(vex::PORT8, vex::gearSetting::ratio36_1, true);
 vex::controller controller1 = vex::controller();
 
@@ -36,16 +36,16 @@ vex::controller controller1 = vex::controller();
 
 /*
   Auton List:
-  1. Blue 4 cube line (4 points)
-  2. Red 4 cube line (4 points)
-  3. Blue 1 cube and 4 cube stack (5 points)
-  4. Red 1 cube and 4 cube stack (5 points)
+  1. Blue 4 cube line (5 points)
+  2. Red 4 cube line (5 points)
+  3. Blue 1 cube and 4 cube stack (6 points)
+  4. Red 1 cube and 4 cube stack (6 points)
 
   Driver skills:
   10. cool programming skills thing
 */
 
-int Auton = 1;
+int Auton = 2;
 
 motor motorArray[8] = {leftDrive, rightDrive, lift1, lift2, lift3, leftRoller, rightRoller, shifter};
 std::string motorNames[8] = {"Left Drive", "Right Drive", "Left Lift", "Bottom Right Lift", "Top Right Lift", "Left Roller", "Right Roller", "Shifter"};
@@ -55,6 +55,13 @@ double leftDriveVel = 0;
 double distance;
 double shifterSpeed;
 bool shifterGoingUp = false;
+double kp = 0.15;
+double ki = 0.05;
+int totalError = 0;
+int error;
+int target;
+int p;
+int i;
 
 /*---------------------------------------------------------------------------*/
 /*                                Functions                                  */
@@ -111,6 +118,35 @@ void turnCW(double time, double speed){
   wait(time, msec);
   leftDrive.stop();
   rightDrive.stop();
+}
+
+void turnMotor(double degrees, double time, double speed, motor spinningMotor){
+  bool goingFwd;
+  if(speed < 0){
+    goingFwd = false;
+  }else{
+    goingFwd = true;
+  }
+  int revolutions = 0;
+  int lastPosition = 0;
+  int degreesTurned = 0;
+  int loops = 0;
+  int currentPosition = 0;
+  if(goingFwd){
+    while(loops * 10 < time && degrees - degreesTurned > 0){
+      spinningMotor.spin(directionType::fwd, speed, velocityUnits::pct);
+      lastPosition = currentPosition;
+      currentPosition = spinningMotor.position(rotationUnits::deg);
+      if(lastPosition > currentPosition){
+        revolutions++;
+      }
+      degreesTurned = currentPosition + revolutions * 360;
+      wait(9, msec);
+      loops ++;
+    }
+  }
+  leftDrive.stop(hold);
+  rightDrive.stop(hold);
 }
 
 void turnCCW(double time, double speed){
@@ -178,14 +214,36 @@ void shifterDown(void){
 
 void shifterUp(void){
   
-  distance = 183;
+  distance = 270;
   while(distance >= 10){
-    distance = abs(183 - abs((int)shifter.position(rotationUnits::deg)));
-    shifterSpeed = 100 * (distance/265);
+    distance = abs(270 - abs((int)shifter.position(rotationUnits::deg)));
+    shifterSpeed = (270 - (int) shifter.position(rotationUnits::deg)) * kp * 0.25;
     shifter.spin(directionType::rev, shifterSpeed, velocityUnits::pct);
   }
   shifter.stop(hold);
+  rollerStop();
 
+  // target = 200;
+  // error = 200;
+  // if(error > 10){
+  //   error = target - (int) shifter.position(rotationUnits::deg);
+  //   p = error * kp;
+  //   totalError += error;
+  //   i = totalError*ki;
+  //   shifterSpeed = p+i;
+  //   shifter.spin(directionType::rev, shifterSpeed, velocityUnits::pct);
+  // }
+
+}
+
+void foldOut(void){
+  rollerExtake(100);
+  wait(500, msec);
+  rollerIntake(100);
+  wait(1000, msec);
+  rollerExtake(100);
+  wait(1000, msec);
+  rollerStop();
 }
 
 /*---------------------------------------------------------------------------*/
@@ -202,21 +260,41 @@ void pre_auton(void) {
 /*---------------------------------------------------------------------------*/
 
 void autonomous(void) {
+  foldOut();
+  liftDownFor(200, 100);
   if(Auton == 1){
     rollerIntake(80);
-    drive(1500, 50);
-    turnCCW(500, 50);
-    drive(1000,50);
+    drive(4500, 20);
+    rollerStop();
+    turnCCW(870, 100);
+    liftUpFor(200, 50);
+    drive(1800,50);
+    rollerStop();
+    rollerExtake(100);
+    wait(200, msec);
+    rollerStop();
+    rollerExtake(5);
     shifterUp();
-    drive(250, -50);
+    rollerExtake(60);
+    drive(400, -50);
+    rollerStop();
     shifterDown();
   }else if(Auton == 2){
     rollerIntake(80);
-    drive(1500, 50);
-    turnCW(500, 50);
-    drive(1000,50);
+    drive(4500, 20);
+    rollerStop();
+    turnCW(950, 100);
+    liftUpFor(200, 50);
+    drive(1800,50);
+    rollerStop();
+    rollerExtake(100);
+    wait(200, msec);
+    rollerStop();
+    rollerExtake(5);
     shifterUp();
-    drive(250, -50);
+    rollerExtake(60);
+    drive(400, -50);
+    rollerStop();
     shifterDown();
   }else if(Auton == 3){
     rollerIntake(80);
@@ -333,28 +411,49 @@ void usercontrol(void) {
     }
 
     //shifter
+    
+
+    // if(shifterGoingUp){
+    //   distance = abs(220 - abs((int)shifter.position(rotationUnits::deg)));
+    //   if(distance >= 10){
+    //     if(shifter.position(rotationUnits::deg) < 100){
+    //       shifterSpeed = 100;
+    //     }else {
+    //       shifterSpeed = 10 * ((220 - distance)/220);
+    //     }
+    //     shifter.spin(directionType::rev, shifterSpeed, velocityUnits::pct);
+    //     //rollerExtake(20);
+    //   }else{
+    //     shifter.stop(hold);
+    //   }
+    // }else{
+    //   shifter.rotateTo(0, rotationUnits::deg, 15, velocityUnits::pct, false);
+    // }
+
+    error = target - (int) shifter.position(rotationUnits::deg);
+    p = error * kp;
+    totalError += error;
+    i = totalError*ki;
+    shifterSpeed = p+i;
+
     if(controller1.ButtonUp.pressing()){
-      shifterGoingUp = true;
+      target = -300;
+      totalError = 0;
+      shifter.spin(directionType::fwd, shifterSpeed, velocityUnits::pct);
     }else if(controller1.ButtonDown.pressing()){
-      shifterGoingUp = false;
+      target = 00;
+      totalError = 0;
+      shifter.spin(directionType::fwd, shifterSpeed, velocityUnits::pct);
+    }else{
+      shifter.stop(hold);
     }
 
-    if(shifterGoingUp){
-      distance = abs(210 - abs((int)shifter.position(rotationUnits::deg)));
-      if(distance >= 10){
-        if(shifter.position(rotationUnits::deg) < 75){
-          shifterSpeed = 100;
-        }else {
-          shifterSpeed = 20 * (distance/210);
-        }
-        shifter.spin(directionType::rev, shifterSpeed, velocityUnits::pct);
-        //rollerExtake(20);
-      }else{
-        shifter.stop(hold);
-      }
-    }else{
-      shifter.rotateTo(0, rotationUnits::deg, 15, velocityUnits::pct, false);
-    }
+    //shifter
+    // if(controller1.ButtonRight.pressing()){
+    //   shifter.spin(directionType::rev);
+    // }else if(controller1.ButtonLeft.pressing()){
+    //   shifter.spin(directionType::fwd);
+    // }
 
     //motor temp stuff
     Brain.Screen.drawCircle(212, 60, 50, circleColor());
@@ -363,6 +462,27 @@ void usercontrol(void) {
         Brain.Screen.setCursor(i+1, 1);
         Brain.Screen.print(motorNames[i].c_str());
       }
+    }
+
+    // Brain.Screen.setCursor(1, 10);
+    // Brain.Screen.print("error: ");
+    // Brain.Screen.setCursor(2, 10);
+    // Brain.Screen.print(error);
+    // Brain.Screen.setCursor(3, 10);
+    // Brain.Screen.print("speed: ");
+    // Brain.Screen.setCursor(4, 10);
+    // Brain.Screen.print(shifterSpeed);
+    // Brain.Screen.setCursor(5, 10);
+    // Brain.Screen.print("target:");
+    // Brain.Screen.setCursor(6, 10);
+    // Brain.Screen.print(target);
+    // Brain.Screen.setCursor(7, 10);
+    // Brain.Screen.print("encoder:");
+    // Brain.Screen.setCursor(8, 10);
+    // Brain.Screen.print(shifter.position(rotationUnits::deg));
+
+    if(controller1.ButtonX.pressing()){
+      foldOut();
     }
 
     wait(5, msec); // Sleep the task to save resources
