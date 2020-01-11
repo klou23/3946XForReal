@@ -25,10 +25,11 @@ vex::motor rightDrive(vex::PORT19, vex::gearSetting::ratio18_1, true);
 vex::motor lift1(vex::PORT17, vex::gearSetting::ratio36_1, true);
 vex::motor lift2(vex::PORT10, vex::gearSetting::ratio36_1, false);
 vex::motor lift3(vex::PORT6, vex::gearSetting::ratio36_1, false);
-vex::motor leftRoller(vex::PORT2, vex::gearSetting::ratio36_1, false);
+vex::motor leftRoller(vex::PORT1, vex::gearSetting::ratio36_1, false);
 vex::motor rightRoller(vex::PORT3, vex::gearSetting::ratio36_1, true);
 vex::motor shifter(vex::PORT8, vex::gearSetting::ratio36_1, true);
-vex::controller controller1 = vex::controller();
+vex::controller controller1 = vex::controller(controllerType::primary);
+vex::controller controller2 = vex::controller(controllerType::partner);
 
 /*---------------------------------------------------------------------------*/
 /*                             Variables, Arrays                             */
@@ -42,10 +43,11 @@ vex::controller controller1 = vex::controller();
   4. Red 1 cube and 4 cube stack (6 points)
 
   Driver skills:
-  10. cool programming skills thing
+  10. cool programming skills thing (64 pts)
+  11. programming skills (15 pts)
 */
 
-int Auton = 2;
+int Auton = 1;
 
 motor motorArray[8] = {leftDrive, rightDrive, lift1, lift2, lift3, leftRoller, rightRoller, shifter};
 std::string motorNames[8] = {"Left Drive", "Right Drive", "Left Lift", "Bottom Right Lift", "Top Right Lift", "Left Roller", "Right Roller", "Shifter"};
@@ -55,7 +57,7 @@ double leftDriveVel = 0;
 double distance;
 double shifterSpeed;
 bool shifterGoingUp = false;
-double kp = 0.15;
+double kp = 0.2;
 double ki = 0.05;
 int totalError = 0;
 int error;
@@ -214,10 +216,10 @@ void shifterDown(void){
 
 void shifterUp(void){
   
-  distance = 270;
+  distance = 250;
   while(distance >= 10){
-    distance = abs(270 - abs((int)shifter.position(rotationUnits::deg)));
-    shifterSpeed = (270 - (int) shifter.position(rotationUnits::deg)) * kp * 0.25;
+    distance = abs(250 - abs((int)shifter.position(rotationUnits::deg)));
+    shifterSpeed = (250 - (int) shifter.position(rotationUnits::deg)) * kp * 0.25;
     shifter.spin(directionType::rev, shifterSpeed, velocityUnits::pct);
   }
   shifter.stop(hold);
@@ -241,8 +243,6 @@ void foldOut(void){
   wait(500, msec);
   rollerIntake(100);
   wait(1000, msec);
-  rollerExtake(100);
-  wait(1000, msec);
   rollerStop();
 }
 
@@ -264,60 +264,76 @@ void autonomous(void) {
   liftDownFor(200, 100);
   if(Auton == 1){
     rollerIntake(80);
-    drive(4500, 20);
+    drive(3000, 30);
     rollerStop();
-    turnCCW(870, 100);
+    turnCCW(900, 100);
     liftUpFor(200, 50);
-    drive(1800,50);
+    drive(1900,50);
     rollerStop();
-    rollerExtake(100);
-    wait(200, msec);
-    rollerStop();
-    rollerExtake(5);
+    leftDrive.stop(hold);
+    rightDrive.stop(hold);
     shifterUp();
-    rollerExtake(60);
-    drive(400, -50);
+    drive(20,100);
+    rollerExtake(20);
+    wait(500, msec);
+    drive(1000, -50);
     rollerStop();
-    shifterDown();
   }else if(Auton == 2){
     rollerIntake(80);
-    drive(4500, 20);
+    drive(3000, 30);
     rollerStop();
-    turnCW(950, 100);
+    turnCW(887, 100);
     liftUpFor(200, 50);
-    drive(1800,50);
+    drive(1900,50);
     rollerStop();
-    rollerExtake(100);
-    wait(200, msec);
-    rollerStop();
-    rollerExtake(5);
+    leftDrive.stop(hold);
+    rightDrive.stop(hold);
     shifterUp();
-    rollerExtake(60);
-    drive(400, -50);
+    drive(20,100);
+    rollerExtake(20);
+    wait(500, msec);
+    drive(1000, -50);
     rollerStop();
-    shifterDown();
   }else if(Auton == 3){
     rollerIntake(80);
     drive(1000, 50);
     liftUpFor(800, 80);
-    drive(500, 50);
+    drive(450, 50);
     liftDownFor(1000, 50);
-    turnCW(500, 50);
+    turnCW(885, 100);
     drive(1000, 50);
+    rollerStop();
+    leftDrive.stop(hold);
+    rightDrive.stop(hold);
     shifterUp();
-    drive(250, -50);
-    shifterDown();
+    drive(20,100);
+    rollerExtake(20);
+    wait(500, msec);
+    drive(1000, -50);
+    rollerStop();
   }else if(Auton == 4){
     rollerIntake(80);
-    drive(1000, 50);
-    liftUpFor(800, 80);
-    drive(500, 50);
-    liftDownFor(1000, 50);
-    turnCCW(500, 50);
-    drive(1000, 50);
+    drive(810, 50);
+    liftUpFor(850, 80);
+    drive(450, 50);
+    rollerIntake(60);
+    liftDownFor(1000, 30);
+    drive(50,-50);
+    liftDownFor(1000, 30);
+    turnCCW(732, 100);
+    drive(2000, 40);
+    leftDrive.stop(hold);
+    rightDrive.stop(hold);
+    rollerExtake(100);
+    wait(300, msec);
+    rollerStop();
     shifterUp();
-    drive(250, -50);
-    shifterDown();
+    wait(200, msec);
+    drive(50,100);
+    rollerExtake(20);
+    wait(500, msec);
+    drive(1000, -50);
+    rollerStop();
   }else if(Auton == 10){
     rollerIntake(100);
     wait(250, msec);
@@ -377,6 +393,55 @@ void autonomous(void) {
     shifterUp();
     drive(100, -100);
     shifterDown();
+  }else if(Auton == 11){
+    //red straight line auton
+    rollerIntake(80);
+    drive(3000, 30);
+    rollerStop();
+    turnCW(887, 100);
+    liftUpFor(200, 50);
+    drive(1900,50);
+    rollerStop();
+    leftDrive.stop(hold);
+    rightDrive.stop(hold);
+    shifterUp();
+    drive(20,100);
+    rollerExtake(20);
+    wait(500, msec);
+    drive(1000, -50);
+    rollerStop();
+
+    //goblet 1
+    drive(100, -75);
+    turnCW(800, 100);
+    rollerIntake(80);
+    drive(700, 50);
+    turnCW(500, 100);
+    liftUpFor(400, 100);
+    drive(700, 50);
+    leftDrive.stop(hold);
+    rightDrive.stop(hold);
+    rollerExtake(80);
+    wait(200, msec);
+    rollerStop();
+
+    //reset
+    drive(100, -50);
+    liftDownFor(500, 100);
+    turnCCW(400, 100);
+
+    //goblet 2
+    rollerIntake(80);
+    drive(1000, 50);
+    drive(300, -50);
+    turnCCW(100, 100);
+    liftUpFor(400, 100);
+    drive(300, 50);
+    rollerExtake(100);
+    wait(200, msec);
+    rollerStop();
+    drive(300, -50);
+    liftDownFor(400, 100);
   }
 }
 
@@ -402,7 +467,15 @@ void usercontrol(void) {
     }
 
     //roller
-    if(controller1.ButtonL1.pressing()){
+    if(controller2.ButtonL1.pressing()){
+      rollerIntake(30);
+    }else if(controller2.ButtonL2.pressing()){
+      rollerExtake(30);
+    }else if(controller2.ButtonR1.pressing()){
+      rollerIntake(60);
+    }else if(controller2.ButtonR2.pressing()){
+      rollerExtake(60);
+    }else if(controller1.ButtonL1.pressing()){
       rollerIntake(100);
     }else if(controller1.ButtonL2.pressing()){
       rollerExtake(100);
