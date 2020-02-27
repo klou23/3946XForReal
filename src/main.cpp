@@ -1,258 +1,152 @@
 /*----------------------------------------------------------------------------*/
 /*                                                                            */
 /*    Module:       main.cpp                                                  */
-/*    Author:       Kevin Lou                                                 */
-/*    Created:      Fri Nov 9 2019                                            */
-/*    Description:  3946X Code OFFICAL                                        */
+/*    Author:       Kevin Lou                                                       */
+/*    Created:      Wed Feb 26 2020                                           */
+/*    Description:  Competition Template                                      */
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
 
-
 #include "vex.h"
 
-using namespace vex;
+// ---- START VEXCODE CONFIGURED DEVICES ----
+// Robot Configuration:
+// [Name]               [Type]        [Port(s)]
+// Drivetrain           drivetrain    18, 19, 12      
+// ---- END VEXCODE CONFIGURED DEVICES ----
 
-/*----------------------------------------------------------------------------*/
-/*           Global Instances of motors, device, and competition             */
-/*----------------------------------------------------------------------------*/
+using namespace vex;
 
 // A global instance of competition
 competition Competition;
 
-//global instances of motors and other devices here
+// global instances of motors and other devices here
 vex::motor leftDrive(vex::PORT18, vex::gearSetting::ratio18_1, false);
 vex::motor rightDrive(vex::PORT19, vex::gearSetting::ratio18_1, true);
-vex::motor lift1(vex::PORT17, vex::gearSetting::ratio36_1, true);
-vex::motor lift2(vex::PORT10, vex::gearSetting::ratio36_1, false);
-vex::motor lift3(vex::PORT6, vex::gearSetting::ratio36_1, false);
+vex::motor rightLift(vex::PORT17, vex::gearSetting::ratio36_1, true);
+vex::motor leftLift(vex::PORT16, vex::gearSetting::ratio36_1, true);
 vex::motor leftRoller(vex::PORT1, vex::gearSetting::ratio36_1, false);
 vex::motor rightRoller(vex::PORT3, vex::gearSetting::ratio36_1, true);
-vex::motor shifter(vex::PORT8, vex::gearSetting::ratio36_1, true);
+vex::motor shifter1(vex::PORT8, vex::gearSetting::ratio36_1, true);
+vex::motor shifter2(vex::PORT11, vex::gearSetting::ratio36_1, true);
 vex::controller controller1 = vex::controller(controllerType::primary);
 vex::controller controller2 = vex::controller(controllerType::partner);
+vex::inertial gyroscope(vex::PORT12);
+
+//global variable
+double leftDriveSpeed;
+double rightDriveSpeed;
 
 /*---------------------------------------------------------------------------*/
-/*                             Variables, Arrays                             */
-/*---------------------------------------------------------------------------*/
-
-/*
-  Auton List:
-  1. Blue 4 cube line (5 points)
-  2. Red 4 cube line (5 points)
-  3. Blue 1 cube and 4 cube stack (6 points)
-  4. Red 1 cube and 4 cube stack (6 points)
-
-  Driver skills:
-  10. cool programming skills thing (64 pts)
-  11. programming skills (15 pts)
-*/
-
-int Auton = 1;
-
-motor motorArray[8] = {leftDrive, rightDrive, lift1, lift2, lift3, leftRoller, rightRoller, shifter};
-std::string motorNames[8] = {"Left Drive", "Right Drive", "Left Lift", "Bottom Right Lift", "Top Right Lift", "Left Roller", "Right Roller", "Shifter"};
-
-double rightDriveVel = 0;
-double leftDriveVel = 0;
-double distance;
-double shifterSpeed;
-bool shifterGoingUp = false;
-double kp = 0.2;
-double ki = 0.05;
-int totalError = 0;
-int error;
-int target;
-int p;
-int i;
-
-/*---------------------------------------------------------------------------*/
-/*                                Functions                                  */
+/*                                 Functions                                 */
 /*---------------------------------------------------------------------------*/
 
 void controllerDrive(void){
-  rightDriveVel = controller1.Axis2.value() * 0.8;
-  leftDriveVel = controller1.Axis3.value() * 0.8;
-  rightDrive.spin(directionType::fwd, rightDriveVel, velocityUnits::pct);
-  leftDrive.spin(directionType::fwd, leftDriveVel, velocityUnits::pct);
-}
-
-void liftUp(double speed){
-  lift1.spin(directionType::fwd, speed, velocityUnits::pct);
-  lift2.spin(directionType::fwd, speed, velocityUnits::pct);
-  lift3.spin(directionType::fwd, speed, velocityUnits::pct);
-}
-
-void liftDown(double speed){
-  lift1.spin(directionType::rev, speed, velocityUnits::pct);
-  lift2.spin(directionType::rev, speed, velocityUnits::pct);
-  lift3.spin(directionType::rev, speed, velocityUnits::pct);
-}
-
-void liftStop(void){
-  lift1.stop(hold);
-  lift2.stop(hold);
-  lift3.stop(hold);
-}
-
-void liftUpFor(double time, double speed){
-  liftUp(speed);
-  wait(time, msec);
-  liftStop();
-}
-
-void liftDownFor(double time, double speed){
-  liftDown(speed);
-  wait(time, msec);
-  liftStop();
-}
-
-void drive(double time, double speed){
-  leftDrive.spin(directionType::fwd, speed, velocityUnits::pct);
-  rightDrive.spin(directionType::fwd, speed, velocityUnits::pct);
-  wait(time, msec);
-  leftDrive.stop();
-  rightDrive.stop();
-}
-
-void turnCW(double time, double speed){
-  leftDrive.spin(directionType::fwd, speed, velocityUnits::pct);
-  rightDrive.spin(directionType::rev, speed, velocityUnits::pct);
-  wait(time, msec);
-  leftDrive.stop();
-  rightDrive.stop();
-}
-
-void turnMotor(double degrees, double time, double speed, motor spinningMotor){
-  bool goingFwd;
-  if(speed < 0){
-    goingFwd = false;
+  if(!controller2.ButtonX.pressing()){
+    leftDriveSpeed = ((controller1.Axis3.value()/100)*(controller1.Axis3.value()/100)) * 100;
+    rightDriveSpeed = ((controller1.Axis2.value()/100)*(controller1.Axis2.value()/100)) * 100;
+    rightDrive.spin(directionType::fwd, rightDriveSpeed, velocityUnits::pct);
+    leftDrive.spin(directionType::fwd, leftDriveSpeed, velocityUnits::pct);
   }else{
-    goingFwd = true;
+    leftDrive.stop(hold);
+    rightDrive.stop(hold);
   }
-  int revolutions = 0;
-  int lastPosition = 0;
-  int degreesTurned = 0;
-  int loops = 0;
-  int currentPosition = 0;
-  if(goingFwd){
-    while(loops * 10 < time && degrees - degreesTurned > 0){
-      spinningMotor.spin(directionType::fwd, speed, velocityUnits::pct);
-      lastPosition = currentPosition;
-      currentPosition = spinningMotor.position(rotationUnits::deg);
-      if(lastPosition > currentPosition){
-        revolutions++;
-      }
-      degreesTurned = currentPosition + revolutions * 360;
-      wait(9, msec);
-      loops ++;
-    }
-  }
-  leftDrive.stop(hold);
-  rightDrive.stop(hold);
 }
 
-void turnCCW(double time, double speed){
-  leftDrive.spin(directionType::rev, speed, velocityUnits::pct);
-  rightDrive.spin(directionType::fwd, speed, velocityUnits::pct);
-  wait(time, msec);
-  leftDrive.stop();
-  rightDrive.stop();
+void rollerIntake(){
+  leftRoller.spin(directionType::fwd, 80, velocityUnits::pct);
+  rightRoller.spin(directionType::fwd, 80, velocityUnits::pct);
 }
 
-double testTemp(motor testMotor){
-  return testMotor.temperature();
+void rollerExtake(){
+  leftRoller.spin(directionType::fwd, 80, velocityUnits::pct);
+  rightRoller.spin(directionType::fwd, 80, velocityUnits::pct);
 }
 
-bool isOverTemp(motor motorName, int temp){
-  bool returnValue = false;
-  if(motorName.temperature(temperatureUnits::fahrenheit) > temp){
-    returnValue = true;
-  }
-  return returnValue;
-}
-
-bool allMotorsOverTemp(motor motors[8], int temp){
-  bool returnValue = false;
-  for(int i = 0; i < 8; i++){
-    if(isOverTemp(motors[i], temp)){
-      returnValue = true;
-    }
-  }
-  return returnValue;
-}
-
-int circleColor(void){
-  int returnValue;
-  if(allMotorsOverTemp(motorArray, 150)){
-    returnValue = 0;
-  }else if(allMotorsOverTemp(motorArray, 125)){
-    returnValue = 30;
-  }else if(allMotorsOverTemp(motorArray, 100)){
-    returnValue = 60;
-  }else {
-    returnValue = 90;
-  }
-  return returnValue;
-}
-
-void rollerIntake(double speed){
-  leftRoller.spin(directionType::fwd, speed, velocityUnits::pct);
-  rightRoller.spin(directionType::fwd, speed, velocityUnits::pct);
-}
-
-void rollerExtake(double speed){
-  leftRoller.spin(directionType::rev, speed, velocityUnits::pct);
-  rightRoller.spin(directionType::rev, speed, velocityUnits::pct);
-}
-
-void rollerStop(void){
+void rollerStop(){
   leftRoller.stop(hold);
   rightRoller.stop(hold);
 }
 
-void shifterDown(void){
-  shifter.rotateTo(0, rotationUnits::deg, 15, velocityUnits::pct, false);
+void manualShifterUp(void){
+  shifter1.spin(directionType::fwd, 40, velocityUnits::pct);
+  shifter2.spin(directionType::fwd, 40, velocityUnits::pct);
 }
 
-void shifterUp(void){
-  
-  distance = 250;
-  while(distance >= 10){
-    distance = abs(250 - abs((int)shifter.position(rotationUnits::deg)));
-    shifterSpeed = (250 - (int) shifter.position(rotationUnits::deg)) * kp * 0.25;
-    shifter.spin(directionType::rev, shifterSpeed, velocityUnits::pct);
-  }
-  shifter.stop(hold);
-  rollerStop();
+void manualShifterDown(void){
+  shifter1.spin(directionType::rev, 40, velocityUnits::pct);
+  shifter2.spin(directionType::rev, 40, velocityUnits::pct);
+}
 
-  // target = 200;
-  // error = 200;
-  // if(error > 10){
-  //   error = target - (int) shifter.position(rotationUnits::deg);
-  //   p = error * kp;
-  //   totalError += error;
-  //   i = totalError*ki;
-  //   shifterSpeed = p+i;
-  //   shifter.spin(directionType::rev, shifterSpeed, velocityUnits::pct);
-  // }
+void autonShifterUp(void){
+  shifter1.spin(directionType::fwd, 40, velocityUnits::pct);
+  shifter2.spin(directionType::fwd, 40, velocityUnits::pct);
+}
+
+void autonShifterDown(void){
 
 }
 
-void foldOut(void){
-  rollerExtake(100);
-  wait(500, msec);
-  rollerIntake(100);
-  wait(1000, msec);
-  rollerStop();
+void shifterHold(void){
+  shifter1.stop(hold);
+  shifter2.stop(hold);
+}
+
+void manualLiftUp(void){
+  leftLift.spin(directionType::fwd, 100, velocityUnits::pct);
+  rightLift.spin(directionType::fwd, 100, velocityUnits::pct);
+}
+
+void manualLiftDown(void){
+  leftLift.spin(directionType::rev, 100, velocityUnits::pct);
+  rightLift.spin(directionType::rev, 100, velocityUnits::pct);
+}
+
+void liftHold(void){
+  leftLift.stop(hold);
+  rightLift.stop(hold);
+}
+
+void turnCW(double amount, double speed){
+  gyroscope.setHeading(0, degrees);
+  leftDrive.spin(directionType::fwd, speed, velocityUnits::pct);
+  rightDrive.spin(directionType::rev, speed, velocityUnits::pct);
+  waitUntil(gyroscope.heading() >= amount);
+  rightDrive.stop(hold);
+  leftDrive.stop(hold);
+}
+
+void turnCCW(double amount, double speed){
+  gyroscope.setHeading(0, degrees);
+  leftDrive.spin(directionType::rev, speed, velocityUnits::pct);
+  rightDrive.spin(directionType::fwd, speed, velocityUnits::pct);
+  waitUntil(gyroscope.heading() <= -amount);
+  rightDrive.stop(hold);
+  leftDrive.stop(hold);
+}
+
+void driveFwd(int amount, double speed){
+  Drivetrain.setDriveVelocity(speed, percent);
+  Drivetrain.driveFor(forward, amount, inches);
+}
+
+void driveRev(int amount, double speed){
+  Drivetrain.setDriveVelocity(speed, percent);
+  Drivetrain.driveFor(reverse, amount, inches);
 }
 
 /*---------------------------------------------------------------------------*/
-/*                          Pre-Autonomous Functions                         */
+/*                                 Pre-Auton                                 */
 /*---------------------------------------------------------------------------*/
-
 void pre_auton(void) {
   // Initializing Robot Configuration. DO NOT REMOVE!
   vexcodeInit();
+  gyroscope.calibrate();
+  while(gyroscope.isCalibrating()){
+    wait(10, msec);
+  }
+  leftDrive.setBrake(coast);
+  rightDrive.setBrake(coast);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -260,311 +154,39 @@ void pre_auton(void) {
 /*---------------------------------------------------------------------------*/
 
 void autonomous(void) {
-  foldOut();
-  liftDownFor(200, 100);
-  if(Auton == 1){
-    rollerIntake(80);
-    drive(3000, 30);
-    rollerStop();
-    turnCCW(900, 100);
-    liftUpFor(200, 50);
-    drive(1900,50);
-    rollerStop();
-    leftDrive.stop(hold);
-    rightDrive.stop(hold);
-    shifterUp();
-    drive(20,100);
-    rollerExtake(20);
-    wait(500, msec);
-    drive(1000, -50);
-    rollerStop();
-  }else if(Auton == 2){
-    rollerIntake(80);
-    drive(3000, 30);
-    rollerStop();
-    turnCW(887, 100);
-    liftUpFor(200, 50);
-    drive(1900,50);
-    rollerStop();
-    leftDrive.stop(hold);
-    rightDrive.stop(hold);
-    shifterUp();
-    drive(20,100);
-    rollerExtake(20);
-    wait(500, msec);
-    drive(1000, -50);
-    rollerStop();
-  }else if(Auton == 3){
-    rollerIntake(80);
-    drive(1000, 50);
-    liftUpFor(800, 80);
-    drive(450, 50);
-    liftDownFor(1000, 50);
-    turnCW(885, 100);
-    drive(1000, 50);
-    rollerStop();
-    leftDrive.stop(hold);
-    rightDrive.stop(hold);
-    shifterUp();
-    drive(20,100);
-    rollerExtake(20);
-    wait(500, msec);
-    drive(1000, -50);
-    rollerStop();
-  }else if(Auton == 4){
-    rollerIntake(80);
-    drive(810, 50);
-    liftUpFor(850, 80);
-    drive(450, 50);
-    rollerIntake(60);
-    liftDownFor(1000, 30);
-    drive(50,-50);
-    liftDownFor(1000, 30);
-    turnCCW(732, 100);
-    drive(2000, 40);
-    leftDrive.stop(hold);
-    rightDrive.stop(hold);
-    rollerExtake(100);
-    wait(300, msec);
-    rollerStop();
-    shifterUp();
-    wait(200, msec);
-    drive(50,100);
-    rollerExtake(20);
-    wait(500, msec);
-    drive(1000, -50);
-    rollerStop();
-  }else if(Auton == 10){
-    rollerIntake(100);
-    wait(250, msec);
-    rollerExtake(100);
-    wait(250, msec);
-    rollerStop();
-    liftUpFor(300, 100);
-    drive(400, 100);
-    liftDownFor(300, 100);
-    rollerExtake(100);
-    wait(250, msec);
-    rollerStop();
-    drive(400, -100);
-    turnCCW(100, 100);
-    rollerIntake(85);
-    drive(750, 100);
-    rollerStop();
-    drive(50, -100);
-    turnCCW(80, 100);
-    liftUpFor(500, 100);
-    drive(50, 100);
-    rollerExtake(80);
-    wait(250, msec);
-    rollerStop();
-    drive(50, -100);
-    liftDownFor(500, 100);
-    turnCW(80, 100);
-    rollerIntake(85);
-    drive(700, 100);
-    rollerStop();
-    turnCW(100, 100);
-    drive(200, 100);
-    shifterUp();
-    drive(50, 100);
-    turnCW(250, 100);
-    rollerIntake(85);
-    drive(500, 100);
-    drive(50, -100);
-    rollerStop();
-    turnCCW(350, 100);
-    liftUpFor(300, 100);
-    drive(100, 100);
-    rollerExtake(90);
-    wait(250, msec);
-    rollerStop();
-    drive(50, -100);
-    turnCCW(50, 100);
-    drive(200, 100);
-    turnCCW(200, 100);
-    drive(600, 100);
-    turnCCW(200, 100);
-    rollerIntake(90);
-    drive(1200, 100);
-    rollerStop();
-    turnCW(200, 100);
-    drive(700, 100);
-    shifterUp();
-    drive(100, -100);
-    shifterDown();
-  }else if(Auton == 11){
-    //red straight line auton
-    rollerIntake(80);
-    drive(3000, 30);
-    rollerStop();
-    turnCW(887, 100);
-    liftUpFor(200, 50);
-    drive(1900,50);
-    rollerStop();
-    leftDrive.stop(hold);
-    rightDrive.stop(hold);
-    shifterUp();
-    drive(20,100);
-    rollerExtake(20);
-    wait(500, msec);
-    drive(1000, -50);
-    rollerStop();
-
-    //goblet 1
-    drive(100, -75);
-    turnCW(800, 100);
-    rollerIntake(80);
-    drive(700, 50);
-    turnCW(500, 100);
-    liftUpFor(400, 100);
-    drive(700, 50);
-    leftDrive.stop(hold);
-    rightDrive.stop(hold);
-    rollerExtake(80);
-    wait(200, msec);
-    rollerStop();
-
-    //reset
-    drive(100, -50);
-    liftDownFor(500, 100);
-    turnCCW(400, 100);
-
-    //goblet 2
-    rollerIntake(80);
-    drive(1000, 50);
-    drive(300, -50);
-    turnCCW(100, 100);
-    liftUpFor(400, 100);
-    drive(300, 50);
-    rollerExtake(100);
-    wait(200, msec);
-    rollerStop();
-    drive(300, -50);
-    liftDownFor(400, 100);
-  }
+  /*
+  Important stuff:
+  lift code not implemented, so UPLOAD TO PROGRAM SLOT 2. CHANGE PROGRAM SLOT TO THE LEFT OF THE PROGRAM NAME AT THE TOP
+  USE THIS PROGRAM FOR AUTON, USE THE OTHER ALREADY DOWNLOADED PROGRAM FOR DRIVER PRACTICE
+  SHIFTER CODE NOT IMPLEMENTED
+  */
 }
 
-
-
 /*---------------------------------------------------------------------------*/
-/*                            User Control Task                              */
+/*                              User Control Task                            */
 /*---------------------------------------------------------------------------*/
 
 void usercontrol(void) {
-  // main execution loop for the user control program.
   while (1) {
-    //drive
     controllerDrive();
-
-    //lift
-    if(controller1.ButtonR1.pressing()){
-      liftUp(100);
-    }else if(controller1.ButtonR2.pressing()){
-      liftDown(100);
-    }else{
-      liftStop();
-    }
-
-    //roller
-    if(controller2.ButtonL1.pressing()){
-      rollerIntake(30);
-    }else if(controller2.ButtonL2.pressing()){
-      rollerExtake(30);
-    }else if(controller2.ButtonR1.pressing()){
-      rollerIntake(60);
-    }else if(controller2.ButtonR2.pressing()){
-      rollerExtake(60);
-    }else if(controller1.ButtonL1.pressing()){
-      rollerIntake(100);
+    if(controller1.ButtonL1.pressing()){
+      rollerIntake();
     }else if(controller1.ButtonL2.pressing()){
-      rollerExtake(100);
+      rollerExtake();
     }else{
       rollerStop();
     }
 
-    //shifter
-    
-
-    // if(shifterGoingUp){
-    //   distance = abs(220 - abs((int)shifter.position(rotationUnits::deg)));
-    //   if(distance >= 10){
-    //     if(shifter.position(rotationUnits::deg) < 100){
-    //       shifterSpeed = 100;
-    //     }else {
-    //       shifterSpeed = 10 * ((220 - distance)/220);
-    //     }
-    //     shifter.spin(directionType::rev, shifterSpeed, velocityUnits::pct);
-    //     //rollerExtake(20);
-    //   }else{
-    //     shifter.stop(hold);
-    //   }
-    // }else{
-    //   shifter.rotateTo(0, rotationUnits::deg, 15, velocityUnits::pct, false);
-    // }
-
-    error = target - (int) shifter.position(rotationUnits::deg);
-    p = error * kp;
-    totalError += error;
-    i = totalError*ki;
-    shifterSpeed = p+i;
-
     if(controller1.ButtonUp.pressing()){
-      target = -300;
-      totalError = 0;
-      shifter.spin(directionType::fwd, shifterSpeed, velocityUnits::pct);
+      manualShifterUp();
     }else if(controller1.ButtonDown.pressing()){
-      target = 00;
-      totalError = 0;
-      shifter.spin(directionType::fwd, shifterSpeed, velocityUnits::pct);
+      manualShifterDown();
     }else{
-      shifter.stop(hold);
+      shifterHold();
     }
-
-    //shifter
-    // if(controller1.ButtonRight.pressing()){
-    //   shifter.spin(directionType::rev);
-    // }else if(controller1.ButtonLeft.pressing()){
-    //   shifter.spin(directionType::fwd);
-    // }
-
-    //motor temp stuff
-    Brain.Screen.drawCircle(212, 60, 50, circleColor());
-    for(int i = 0; i < 8 ; i++){
-      if(isOverTemp(motorArray[i], 125)){
-        Brain.Screen.setCursor(i+1, 1);
-        Brain.Screen.print(motorNames[i].c_str());
-      }
-    }
-
-    // Brain.Screen.setCursor(1, 10);
-    // Brain.Screen.print("error: ");
-    // Brain.Screen.setCursor(2, 10);
-    // Brain.Screen.print(error);
-    // Brain.Screen.setCursor(3, 10);
-    // Brain.Screen.print("speed: ");
-    // Brain.Screen.setCursor(4, 10);
-    // Brain.Screen.print(shifterSpeed);
-    // Brain.Screen.setCursor(5, 10);
-    // Brain.Screen.print("target:");
-    // Brain.Screen.setCursor(6, 10);
-    // Brain.Screen.print(target);
-    // Brain.Screen.setCursor(7, 10);
-    // Brain.Screen.print("encoder:");
-    // Brain.Screen.setCursor(8, 10);
-    // Brain.Screen.print(shifter.position(rotationUnits::deg));
-
-    if(controller1.ButtonX.pressing()){
-      foldOut();
-    }
-
-    wait(5, msec); // Sleep the task to save resources
   }
 }
 
-/*---------------------------------------------------------------------------*/
-/*                                  Main                                     */
-/*---------------------------------------------------------------------------*/
 
 int main() {
   // Set up callbacks for autonomous and driver control periods.
