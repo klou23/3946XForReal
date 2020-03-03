@@ -47,30 +47,30 @@ vex::pot shifterPot(ThreeWirePort.B);
 std::string currentAutonName = "None";
 double leftDriveSpeed;
 double rightDriveSpeed;
-int shifterDown = 2630;
-int shifterUp = 300;
-float gyroKp=1;
-float gyroKd=0.0;
-bool gyroCalibrated=false;
-float shifterKp = -0.055; // negative because sensor is reversed
+int shifterDown = 500;
+int shifterUp = 2727;
+float gyroKp = 1;
+float gyroKd = 0.0;
+bool gyroCalibrated = false;
+float shifterKp = 0.055; 
 int totalDistance = shifterDown - shifterUp;
 int shifterPIDSpeed = 0;
 int distanceError = 0;
 int shifterMin = 12;
 int currAutonID = -1; // 0 = Prog, 1 = Blue protected, 2 = Blue unprotected, 3 =
                       // Red Protected, 4 = Red unprotected, 5 = One cube push
+int rgbHue = 0;
 /*---------------------------------------------------------------------------*/
 /*                                 Functions                                 */
 /*---------------------------------------------------------------------------*/
-
-float angleSub(float deg1, float deg2){
-  float dist=deg1-deg2;
-  return fmod((dist+180),360) -180;
+float angleSub(float deg1, float deg2) {
+  float dist = deg1 - deg2;
+  return fmod((dist + 180), 360) - 180;
 }
 
 void rollerIntake() {
-  leftRoller.spin(directionType::fwd, 80, velocityUnits::pct);
-  rightRoller.spin(directionType::fwd, 80, velocityUnits::pct);
+  leftRoller.spin(directionType::fwd, 100, velocityUnits::pct);
+  rightRoller.spin(directionType::fwd, 100, velocityUnits::pct);
 }
 void runRollers(int speed) {
   leftRoller.spin(directionType::fwd, speed, velocityUnits::pct);
@@ -87,12 +87,15 @@ void driveDist(float amount, float speed) {
                        false);
   leftDrive.rotateFor(amount, rotationUnits::deg, speed, velocityUnits::pct);
 }
-void driveDistRollers(float amount, float speed, float rollerDelay=0){
-  rightDrive.startRotateFor(amount, rotationUnits::deg, speed, velocityUnits::pct);
-  leftDrive.startRotateFor(amount, rotationUnits::deg, speed, velocityUnits::pct);
+void driveDistRollers(float amount, float speed, float rollerDelay = 0) {
+  rightDrive.startRotateFor(amount, rotationUnits::deg, speed,
+                            velocityUnits::pct);
+  leftDrive.startRotateFor(amount, rotationUnits::deg, speed,
+                           velocityUnits::pct);
   wait(rollerDelay, timeUnits::msec);
   runRollers(100);
-  while(!rightDrive.isDone() || !leftDrive.isDone()){}
+  while (!rightDrive.isDone() || !leftDrive.isDone()) {
+  }
 }
 
 void controllerDrive(void) {
@@ -107,12 +110,10 @@ void controllerDrive(void) {
   }
 }
 
-
-
 void autonShifterDown(void) {
-  while (shifterPot.value(analogUnits::range12bit) < shifterDown) {
-    shifter1.spin(directionType::rev, 80, velocityUnits::pct);
-    shifter2.spin(directionType::rev, 80, velocityUnits::pct);
+  while (shifterPot.value(analogUnits::range12bit) > shifterDown) {
+    shifter1.spin(directionType::rev, 50, velocityUnits::pct);
+    shifter2.spin(directionType::rev, 50, velocityUnits::pct);
   }
   shifter1.stop();
   shifter2.stop();
@@ -123,16 +124,15 @@ void rollerStop() {
   rightRoller.stop(hold);
 }
 
-float shifterStackSpeed(){
+float shifterStackSpeed() {
   distanceError = shifterUp - shifterPot.value(vex::analogUnits::range12bit);
-  shifterPIDSpeed=distanceError * shifterKp;
+  shifterPIDSpeed = distanceError * shifterKp;
 
-  if(distanceError * shifterKp <= shifterMin){
-      shifterPIDSpeed = shifterMin;
-    }
-    else{
-      shifterPIDSpeed = distanceError * shifterKp;
-    }
+  if (distanceError * shifterKp <= shifterMin) {
+    shifterPIDSpeed = shifterMin;
+  } else {
+    shifterPIDSpeed = distanceError * shifterKp;
+  }
 
   return shifterPIDSpeed;
 }
@@ -140,7 +140,9 @@ void autoStack(void) {
   distanceError = shifterUp - shifterPot.value(vex::analogUnits::range12bit);
   shifterPIDSpeed = shifterStackSpeed();
   if (abs(distanceError) <= 30) {
-    /**
+    shifter1.stop();
+    shifter2.stop();
+    /** 
     // Stack done
     shifter1.stop();
     shifter2.stop();
@@ -158,12 +160,11 @@ void autoStack(void) {
     shifter2.stop();
     **/
   } else {
-    
+
     shifter1.spin(directionType::fwd, shifterPIDSpeed, velocityUnits::pct);
     shifter2.spin(directionType::fwd, shifterPIDSpeed, velocityUnits::pct);
   }
 }
-
 
 void manualShifterDown(void) {
   float speed = 80;
@@ -196,25 +197,25 @@ void liftHold(void) {
   rightLift.stop(hold);
 }
 
-
-
 void gyroTurnTo(double amount) {
-  float lastYaw=0;
-  int timeInZone=0;
-  while(timeInZone<8){
-    float speed=angleSub(amount,gyroscope.yaw())*gyroKp-fabs((gyroscope.yaw()-lastYaw))*gyroKd;
-    lastYaw=gyroscope.yaw();
+  float lastYaw = 0;
+  int timeInZone = 0;
+  while (timeInZone < 8) {
+    float speed = angleSub(amount, gyroscope.yaw()) * gyroKp -
+                  fabs((gyroscope.yaw() - lastYaw)) * gyroKd;
+    lastYaw = gyroscope.yaw();
     leftDrive.spin(directionType::fwd, speed, velocityUnits::pct);
     rightDrive.spin(directionType::rev, speed, velocityUnits::pct);
     wait(10, timeUnits::msec);
-    if(fabs(angleSub(gyroscope.yaw(),amount))<2)timeInZone++;
-    else timeInZone=0;
+    if (fabs(angleSub(gyroscope.yaw(), amount)) < 2)
+      timeInZone++;
+    else
+      timeInZone = 0;
   }
-  
+
   rightDrive.stop(hold);
   leftDrive.stop(hold);
 }
-
 
 void lift(int speed) {
   leftLift.spin(vex::directionType::fwd, speed, vex::percentUnits::pct);
@@ -232,11 +233,19 @@ void liftTo(int height, int speed) {
 /*---------------------------------------------------------------------------*/
 
 void printToScreen(int x, int y, std::string str) {
-  color currentFill = transparent;
-  Brain.Screen.setFillColor(currentFill);
+  Brain.Screen.setPenColor(white);
   Brain.Screen.printAt(x, y, str.c_str());
 }
 
+void printToScreenYellow(int x, int y, std::string str) {
+  Brain.Screen.setPenColor(yellow);
+  Brain.Screen.printAt(x, y, str.c_str());
+}
+
+void printToScreenRed(int x, int y, std::string str) {
+  Brain.Screen.setPenColor(red);
+  Brain.Screen.printAt(x, y, str.c_str());
+}
 void drawRectangle(int x, int y, int width, int height, color fillColor,
                    color BorderColor) {
   Brain.Screen.setFillColor(fillColor);
@@ -251,38 +260,44 @@ void drawTouch(void) {
 
 void drawHeader(void) {
   // AutonBox
-  drawRectangle(240, 0, 240, 45, green, green);
-  printToScreen(245, 25, currentAutonName);
+  drawRectangle(240, 0, 240, 45, orange, orange);
+  Brain.Screen.setCursor(2,26);
+  Brain.Screen.print(currentAutonName.c_str());
 
-  // Team Name
-  drawRectangle(0, 0, 240, 45, white, white);
-  printToScreen(5, 25, "3946-X | Kent Denver");
+  // Battery
+  
+  drawRectangle(0, 0, 240, 45, black, black);
+  Brain.Screen.setCursor(2,2);
+  Brain.Screen.print("Battery Percentage: ");
+  float brainBatt = (Brain.Battery.capacity());
+  Brain.Screen.print(brainBatt);
+
 }
 
 void drawMainMenu(void) {
   drawHeader();
 
   // Debugger Button, top left
-  drawRectangle(5, 50, 230, 90, blue, white);
+  drawRectangle(5, 50, 230, 90, black, black);
   printToScreen(10, 105, "Debugger");
 
   // Sensor Reset Button, bottom left
-  drawRectangle(5, 145, 230, 90, blue, white);
+  drawRectangle(5, 145, 230, 90, black, black);
   printToScreen(10, 200, "Reset Sensors");
 
   // Auton Button, top right
-  drawRectangle(245, 50, 230, 90, blue, white);
+  drawRectangle(245, 50, 230, 90, black, black);
   printToScreen(250, 105, "Select Autonomous");
 
   // Abort Button, bottom right
-  drawRectangle(245, 145, 230, 90, blue, white);
+  drawRectangle(245, 145, 230, 90, black, black);
   printToScreen(250, 200, "Motor Temperatures");
 }
 
 void drawDebugger(void) {
   // This iteration's debugger variables: shifterKp, shifterPIDSpeed, shifterPot
   // in ticks, shifter error, drive moter encoder values, gyro values
-
+  drawRectangle(0, 0, 480, 240, black, black);
   drawHeader();
 
   Brain.Screen.setCursor(4, 4);
@@ -308,7 +323,7 @@ void drawDebugger(void) {
   Brain.Screen.print(gyroscope.yaw());
 
   // Go back to main menu
-  drawRectangle(245, 145, 230, 90, blue, red);
+  drawRectangle(245, 145, 230, 90, red, red);
   printToScreen(250, 180, "Main Menu");
 }
 
@@ -379,7 +394,8 @@ void clearSensors(void) {
   shifter1.resetPosition();
   shifter2.resetPosition();
 }
-void drawMotorTempScreen(){
+void drawMotorTempScreen() {
+  drawRectangle(0, 0, 480, 240, black, black);
   drawHeader();
 
   Brain.Screen.setCursor(4, 4);
@@ -407,8 +423,7 @@ void drawMotorTempScreen(){
   Brain.Screen.print("Right Drive: ");
   Brain.Screen.print(rightDrive.temperature(temperatureUnits::fahrenheit));
 
-
-  //Go back  button
+  // Go back  button
   drawRectangle(245, 145, 230, 90, red, red);
   printToScreen(250, 180, "Main Menu");
 }
@@ -420,12 +435,11 @@ void pre_auton(void) {
   // Initializing Robot Configuration. DO NOT REMOVE!
   vexcodeInit();
 
-
   gyroscope.calibrate();
   while (gyroscope.isCalibrating()) {
     wait(10, msec);
   }
-  gyroCalibrated=true;
+  gyroCalibrated = true;
 
   leftDrive.setBrake(coast);
   rightDrive.setBrake(coast);
@@ -444,11 +458,12 @@ void pre_auton(void) {
       drawRedAutonScreen();
     } else if (currLocation == 4) {
       drawBlueAutonScreen();
-    } else if(currLocation == 5){
+    } else if (currLocation == 5) {
       drawMotorTempScreen();
     }
     Brain.Screen.render();
     // GUI Implementation
+
     if (Brain.Screen.pressing()) {
       while (Brain.Screen.pressing()) { // While being pressed, maintain image
                                         // and draw touch
@@ -463,7 +478,7 @@ void pre_auton(void) {
           drawRedAutonScreen();
         } else if (currLocation == 4) {
           drawBlueAutonScreen();
-        } else if(currLocation == 5){
+        } else if (currLocation == 5) {
           drawMotorTempScreen();
         }
         drawTouch();
@@ -601,10 +616,18 @@ void pre_auton(void) {
             currAutonID = 1;
             currLocation = 0;
           }
-        } else if(currLocation == 5){
-
         }
-      } 
+      } else if (currLocation == 5) {
+        if (Brain.Screen.xPosition() >= 245 &&
+            Brain.Screen.xPosition() <= 475) {
+          // Right half of screen
+          if (Brain.Screen.yPosition() >= 145 &&
+              Brain.Screen.yPosition() <= 235) {
+            // Bottom right corner - Main Menu
+            currLocation = 0;
+          }
+        }
+      }
     }
   }
 }
@@ -612,10 +635,10 @@ void pre_auton(void) {
 /*---------------------------------------------------------------------------*/
 /*                              Autonomous Task */
 /*---------------------------------------------------------------------------*/
-void blueProtected(){
+void blueProtected() {
 
-  if(!gyroCalibrated){
-     gyroscope.calibrate();
+  if (!gyroCalibrated) {
+    gyroscope.calibrate();
     while (gyroscope.isCalibrating()) {
       wait(10, msec);
     }
@@ -634,32 +657,28 @@ void blueProtected(){
   driveDist(1200, 100);
   rollerStop();
 
-  //second cube
+  // second cube
   gyroTurnTo(90);
-  driveDistRollers(1000, 100,500);
+  driveDistRollers(1000, 100, 500);
   rollerStop();
 
-  //third cube
+  // third cube
   gyroTurnTo(-10);
   driveDistRollers(1500, 100, 925);
   rollerStop();
 
-  //go to zone
+  // go to zone
   driveDist(-1000, 100);
   gyroTurnTo(140);
   driveDist(940, 100);
 
-  //place stack
-  while(fabs(shifterUp - shifterPot.value(vex::analogUnits::range12bit))>=30){
+  // place stack
+  while (fabs(shifterUp - shifterPot.value(vex::analogUnits::range12bit)) >=
+         30) {
     shifter1.spin(directionType::fwd, shifterStackSpeed(), velocityUnits::pct);
     shifter2.spin(directionType::fwd, shifterStackSpeed(), velocityUnits::pct);
   }
   driveDist(-1000, 100);
-  
-
-  
-
-
 }
 void autonomous(void) {
   /*
@@ -669,18 +688,12 @@ void autonomous(void) {
   THE OTHER ALREADY DOWNLOADED PROGRAM FOR DRIVER PRACTICE SHIFTER CODE NOT
   IMPLEMENTED
   */
-  if(!gyroCalibrated){
-     gyroscope.calibrate();
+  if (!gyroCalibrated) {
+    gyroscope.calibrate();
     while (gyroscope.isCalibrating()) {
       wait(10, msec);
     }
   }
-
-
-
-  
-  
-  
 }
 
 /*---------------------------------------------------------------------------*/
@@ -701,28 +714,29 @@ void usercontrol(void) {
     if (controller1.ButtonUp.pressing()) {
       autoStack();
     } else if (controller1.ButtonDown.pressing()) {
-      manualShifterDown();
+      if(shifterPot.value(analogUnits::range12bit) > shifterDown){
+        manualShifterDown();
+      }
     } else if (controller1.ButtonB.pressing()) {
       autonShifterDown();
     }
-  
-  else {
-    shifterHold();
-  }
 
-  if (controller1.ButtonR1.pressing()) {
-    lift(100);
-  } else if (controller1.ButtonR2.pressing()) {
-    lift(-100);
-  } else {
-    liftHold();
+    else {
+      shifterHold();
+    }
+
+    if (controller1.ButtonR1.pressing()) {
+      lift(100);
+    } else if (controller1.ButtonR2.pressing()) {
+      lift(-100);
+    } else {
+      liftHold();
+    }
+    if (controller1.ButtonA.pressing()) {
+      gyroTurnTo(90);
+      driveDist(1000, 100);
+    }
   }
-  if(controller1.ButtonA.pressing()){
-    gyroTurnTo(90);
-    driveDist(1000, 100);
-  }
-}
-  
 }
 
 int main() {
