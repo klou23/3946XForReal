@@ -241,7 +241,6 @@ void gyroTurnTo(double amount) {
   wait(100, msec);
 }
 
-
 void lift(int speed) {
   leftLift.spin(vex::directionType::fwd, speed, vex::percentUnits::pct);
   rightLift.spin(vex::directionType::fwd, speed, vex::percentUnits::pct);
@@ -687,7 +686,7 @@ void pre_auton(void) {
 /*                              Autonomous Tasks */
 /*---------------------------------------------------------------------------*/
 void redProtected() {
-if (!gyroCalibrated) {
+  if (!gyroCalibrated) {
     gyroscope.calibrate();
     while (gyroscope.isCalibrating()) {
       wait(100, msec);
@@ -800,7 +799,6 @@ void blueProtected() {
   driveDist(-500, 100);
 }
 
-
 void blueUnprotected() {
   if (!gyroCalibrated) {
     gyroscope.calibrate();
@@ -823,31 +821,31 @@ void blueUnprotected() {
   // wait for ghost tray to fall
   wait(200, timeUnits::msec);
 
-  //Intake first line
-  driveDistRollers(2300,65,1000);
+  // Intake first line
+  driveDistRollers(2300, 65, 1000);
 
-  //Turn to drive back and align
+  // Turn to drive back and align
   gyroTurnTo(45);
 
-  //Drive back to intake second line
-  driveDist(-3200,100);
+  // Drive back to intake second line
+  driveDist(-3200, 100);
 
-  //Turn to realign with line
+  // Turn to realign with line
   gyroTurnTo(0);
 
-  //Intake second line
-  driveDistRollers(3200,65,1000);
+  // Intake second line
+  driveDistRollers(3200, 65, 1000);
 
-  //Drive back to get ready to turn and stack
+  // Drive back to get ready to turn and stack
   driveDist(-1000, 100);
 
-  //turn to face goal zone
+  // turn to face goal zone
   gyroTurnTo(-135);
 
-  //drive to goal zone
+  // drive to goal zone
   driveDist(500, 100);
 
-  //stack
+  // stack
   int autonDistanceError =
       shifterUp - shifterPot.value(vex::analogUnits::range12bit);
   while (autonDistanceError >= 30) {
@@ -864,8 +862,6 @@ void blueUnprotected() {
   rollerExtake();
   driveDist(-500, 100);
 }
-
-
 
 void redUnprotected() {
   if (!gyroCalibrated) {
@@ -886,35 +882,38 @@ void redUnprotected() {
   driveDist(100, 100);
   driveDist(-100, 100);
 
-  //Intake first line
-  driveDistRollers(1310,100,3000);
+  // Intake first line
+  driveDistRollers(1450, 80, 400);
   wait(400, msec);
   rollerStop();
 
-  //Turn to drive back and align
-  gyroTurnTo(-50);
-  
-  //Drive back to intake second line
-  driveDist(-1600,100);
+  // Turn to drive back 
+  gyroTurnTo(-50.5);
 
-  //Turn to realign with line
-  gyroTurnTo(0);
+  // Drive back to intake second line
+  driveDist(-1600, 100);
 
-  //Intake second line
-  driveDistRollers(1900,65,1000);
+  // Turn to realign with line
+  gyroTurnTo(-2);
+
+  // Intake second line
+  driveDistRollers(1900, 65, 1000);
   wait(400, msec);
   rollerStop();
 
-  //Drive back to get ready to turn and stack
+  // Drive back to get ready to turn and stack
   driveDist(-1200, 100);
 
-  //turn to face goal zone
-  gyroTurnTo(120);
+  // turn to face goal zone
+  gyroTurnTo(135);
 
-  //drive to goal zone
-  driveDist(750, 100);
+  // drive to goal zone
+  driveDist(1000, 100);
 
-  //stack
+  // stack
+  rollerExtake();
+  wait(100, msec);
+  rollerStop();
   int autonDistanceError =
       shifterUp - shifterPot.value(vex::analogUnits::range12bit);
   while (autonDistanceError >= 30) {
@@ -928,55 +927,34 @@ void redUnprotected() {
   shifter1.stop();
   shifter2.stop();
   wait(200, msec);
-  rollerExtake();
   driveDist(-500, 100);
   rollerStop();
-
 }
-
-
 
 void progSkills() {}
 
-
-
 void oneCubePush() {}
 
-
 void autonomous(void) {
-  /*
-  Important stuff:
-  lift code not implemented, so UPLOAD TO PROGRAM SLOT 2. CHANGE PROGRAM SLOT
-  TO THE LEFT OF THE PROGRAM NAME AT THE TOP USE THIS PROGRAM FOR AUTON, USE
-  THE OTHER ALREADY DOWNLOADED PROGRAM FOR DRIVER PRACTICE SHIFTER CODE NOT
-  IMPLEMENTED
-  */
 
-  blueProtected();
   // 0 = Prog, 1 = Blue protected, 2 = Blue unprotected, 3 =
   // Red Protected, 4 = Red unprotected, 5 = One cube push
-  /**
-  switch (currAutonID) {
-  case 0:
+
+  if (currAutonID == 0) {
     progSkills();
-    break;
-  case 1:
+  } else if (currAutonID == 1) {
     blueProtected();
-    break;
-  case 2:
+  } else if (currAutonID == 2) {
     blueUnprotected();
-    break;
-  case 3:
+  } else if (currAutonID == 3) {
     redProtected();
-    break;
-  case 4:
+  } else if (currAutonID == 4) {
     redUnprotected();
-    break;
-  case 5:
+  } else if (currAutonID == 5) {
     oneCubePush();
-    break;
+  } else {
+    wait(100, msec); // Do nothing
   }
-  **/
 }
 
 /*---------------------------------------------------------------------------*/
@@ -1016,7 +994,8 @@ void usercontrol(void) {
 
     if (controller1.ButtonUp.pressing() || controller2.ButtonUp.pressing()) {
       autoStack();
-    } else if (controller1.ButtonDown.pressing()) {
+    } else if (controller1.ButtonDown.pressing() ||
+               controller2.ButtonDown.pressing()) {
       if (shifterPot.value(analogUnits::range12bit) > shifterDown) {
         manualShifterDown();
       } else {
@@ -1024,9 +1003,9 @@ void usercontrol(void) {
       }
 
     } else if (controller2.ButtonB.pressing()) {
-      if (shifterPot.value(range12bit) < 1390) {
+      if (shifterPot.value(range12bit) < 920) {
         autoStack();
-      } else if (shifterPot.value(range12bit) > 1410) {
+      } else if (shifterPot.value(range12bit) > 940) {
         manualShifterDown();
       }
     } else {
@@ -1034,7 +1013,9 @@ void usercontrol(void) {
     }
 
     if (controller1.ButtonA.pressing()) {
-      redProtected();
+      redUnprotected();
+    } else {
+      wait(100, msec); // Do nothing
     }
   }
 }
