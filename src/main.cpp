@@ -47,12 +47,12 @@ vex::pot shifterPot(ThreeWirePort.B);
 std::string currentAutonName = "None";
 double leftDriveSpeed;
 double rightDriveSpeed;
-int shifterDown = 500;
-int shifterUp = 2727;
-float gyroKp = 1;
+int shifterDown = 400;
+int shifterUp = 2700;
+float gyroKp = 1.4;
 float gyroKd = 0.0;
 bool gyroCalibrated = false;
-float shifterKp = 0.055; 
+float shifterKp = 0.055;
 int totalDistance = shifterDown - shifterUp;
 int shifterPIDSpeed = 0;
 int distanceError = 0;
@@ -63,11 +63,19 @@ int rgbHue = 0;
 /*---------------------------------------------------------------------------*/
 /*                                 Functions                                 */
 /*---------------------------------------------------------------------------*/
+void rollerStop() {
+  leftRoller.stop(hold);
+  rightRoller.stop(hold);
+}
 float angleSub(float deg1, float deg2) {
   float dist = deg1 - deg2;
   return fmod((dist + 180), 360) - 180;
 }
-
+float max(float a, float b) {
+  if (a > b)
+    return a;
+  return b;
+}
 void rollerIntake() {
   leftRoller.spin(directionType::fwd, 100, velocityUnits::pct);
   rightRoller.spin(directionType::fwd, 100, velocityUnits::pct);
@@ -88,16 +96,30 @@ void driveDist(float amount, float speed) {
   leftDrive.rotateFor(amount, rotationUnits::deg, speed, velocityUnits::pct);
 }
 void driveDistRollers(float amount, float speed, float rollerDelay = 0) {
+  rightDrive.setRotation(0, deg);
+  leftDrive.setRotation(0, deg);
   rightDrive.startRotateFor(amount, rotationUnits::deg, speed,
                             velocityUnits::pct);
   leftDrive.startRotateFor(amount, rotationUnits::deg, speed,
                            velocityUnits::pct);
-  wait(rollerDelay, timeUnits::msec);
-  runRollers(100);
+
   while (!rightDrive.isDone() || !leftDrive.isDone()) {
+    if (rollerDelay > rightDrive.rotation(deg)) {
+      rollerIntake();
+    }
   }
 }
-
+void slowDrive(void) {
+  if (!controller2.ButtonX.pressing()) {
+    leftDriveSpeed = controller1.Axis3.value() * .5;
+    rightDriveSpeed = controller1.Axis2.value() * .5;
+    rightDrive.spin(directionType::fwd, rightDriveSpeed, velocityUnits::pct);
+    leftDrive.spin(directionType::fwd, leftDriveSpeed, velocityUnits::pct);
+  } else {
+    leftDrive.stop(hold);
+    rightDrive.stop(hold);
+  }
+}
 void controllerDrive(void) {
   if (!controller2.ButtonX.pressing()) {
     leftDriveSpeed = controller1.Axis3.value();
@@ -119,11 +141,6 @@ void autonShifterDown(void) {
   shifter2.stop();
 }
 
-void rollerStop() {
-  leftRoller.stop(hold);
-  rightRoller.stop(hold);
-}
-
 float shifterStackSpeed() {
   distanceError = shifterUp - shifterPot.value(vex::analogUnits::range12bit);
   shifterPIDSpeed = distanceError * shifterKp;
@@ -140,14 +157,13 @@ void autoStack(void) {
   distanceError = shifterUp - shifterPot.value(vex::analogUnits::range12bit);
   shifterPIDSpeed = shifterStackSpeed();
   if (abs(distanceError) <= 30) {
-    shifter1.stop();
-    shifter2.stop();
-    /** 
+
     // Stack done
     shifter1.stop();
     shifter2.stop();
-    driveDist(-400, 40);
-    wait(600,msec);
+    driveDist(-200, 40);
+    wait(600, msec);
+    /**
     while (shifterPot.value(analogUnits::range12bit) < shifterDown) {
     shifter1.spin(directionType::rev, 80, velocityUnits::pct);
     shifter2.spin(directionType::rev, 80, velocityUnits::pct);
@@ -196,26 +212,35 @@ void liftHold(void) {
   leftLift.stop(hold);
   rightLift.stop(hold);
 }
-
-void gyroTurnTo(double amount) {
-  float lastYaw = 0;
-  int timeInZone = 0;
-  while (timeInZone < 8) {
-    float speed = angleSub(amount, gyroscope.yaw()) * gyroKp -
-                  fabs((gyroscope.yaw() - lastYaw)) * gyroKd;
-    lastYaw = gyroscope.yaw();
-    leftDrive.spin(directionType::fwd, speed, velocityUnits::pct);
-    rightDrive.spin(directionType::rev, speed, velocityUnits::pct);
-    wait(10, timeUnits::msec);
-    if (fabs(angleSub(gyroscope.yaw(), amount)) < 2)
-      timeInZone++;
-    else
-      timeInZone = 0;
-  }
+void driveHold() {
 
   rightDrive.stop(hold);
   leftDrive.stop(hold);
 }
+void gyroTurnTo(double amount) {
+  float lastYaw = 0;
+  int timeInZone = 0;
+  while (timeInZone < 1) {
+    float speed = angleSub(amount, gyroscope.yaw()) * gyroKp -
+                  fabs((gyroscope.yaw() - lastYaw)) * gyroKd;
+
+    // if(speed>75 || speed<-75 )speed=75*fabs(speed)/speed;
+    lastYaw = gyroscope.yaw();
+
+    wait(2, timeUnits::msec);
+    if (fabs(angleSub(gyroscope.yaw(), amount)) < 1) {
+      timeInZone++;
+      driveHold();
+    } else {
+      leftDrive.spin(directionType::fwd, speed, velocityUnits::pct);
+      rightDrive.spin(directionType::rev, speed, velocityUnits::pct);
+      timeInZone = 0;
+    }
+  }
+  driveHold();
+  wait(100, msec);
+}
+
 
 void lift(int speed) {
   leftLift.spin(vex::directionType::fwd, speed, vex::percentUnits::pct);
@@ -261,17 +286,16 @@ void drawTouch(void) {
 void drawHeader(void) {
   // AutonBox
   drawRectangle(240, 0, 240, 45, orange, orange);
-  Brain.Screen.setCursor(2,26);
+  Brain.Screen.setCursor(2, 26);
   Brain.Screen.print(currentAutonName.c_str());
 
   // Battery
-  
+
   drawRectangle(0, 0, 240, 45, black, black);
-  Brain.Screen.setCursor(2,2);
+  Brain.Screen.setCursor(2, 2);
   Brain.Screen.print("Battery Percentage: ");
   float brainBatt = (Brain.Battery.capacity());
   Brain.Screen.print(brainBatt);
-
 }
 
 void drawMainMenu(void) {
@@ -431,6 +455,12 @@ void drawMotorTempScreen() {
 /*                                 Pre-Auton                                 */
 /*---------------------------------------------------------------------------*/
 void pre_auton(void) {
+  if (!gyroCalibrated) {
+    gyroscope.calibrate();
+    while (gyroscope.isCalibrating()) {
+      wait(10, msec);
+    }
+  }
   Brain.Screen.render(true, false);
   // Initializing Robot Configuration. DO NOT REMOVE!
   vexcodeInit();
@@ -463,7 +493,28 @@ void pre_auton(void) {
     }
     Brain.Screen.render();
     // GUI Implementation
-
+    switch (currAutonID) {
+      switch (currAutonID) {
+      case 0:
+        currentAutonName = "Skills Routine";
+        break;
+      case 1:
+        currentAutonName = "Blue Protected";
+        break;
+      case 2:
+        currentAutonName = "Blue Unprotected";
+        break;
+      case 3:
+        currentAutonName = "Red Protected";
+        break;
+      case 4:
+        currentAutonName = "Red Unprotected";
+        break;
+      case 5:
+        currentAutonName = "One Cube Push";
+        break;
+      }
+    }
     if (Brain.Screen.pressing()) {
       while (Brain.Screen.pressing()) { // While being pressed, maintain image
                                         // and draw touch
@@ -635,51 +686,162 @@ void pre_auton(void) {
 /*---------------------------------------------------------------------------*/
 /*                              Autonomous Task */
 /*---------------------------------------------------------------------------*/
-void blueProtected() {
+void redProtected() {}
 
+
+
+void blueUnprotected() {
   if (!gyroCalibrated) {
     gyroscope.calibrate();
     while (gyroscope.isCalibrating()) {
-      wait(10, msec);
+      wait(100, msec);
     }
   }
-
   // flip out tray
   rollerExtake();
   wait(300, timeUnits::msec);
   rollerStop();
+  shifter1.spin(fwd);
+  shifter2.spin(fwd);
+  wait(1000, msec);
+  shifter1.stop();
+  shifter2.stop();
+  driveDist(100, 100);
+  driveDist(-100, 100);
 
   // wait for ghost tray to fall
-  wait(800, timeUnits::msec);
+  wait(200, timeUnits::msec);
+
+  //Intake first line
+  driveDistRollers(2000, 100,1000);
+}
+
+
+
+void redUnprotected() {
+  if (!gyroCalibrated) {
+    gyroscope.calibrate();
+    while (gyroscope.isCalibrating()) {
+      wait(100, msec);
+    }
+  }
+  // flip out tray
+  rollerExtake();
+  wait(300, timeUnits::msec);
+  rollerStop();
+  shifter1.spin(fwd);
+  shifter2.spin(fwd);
+  wait(1000, msec);
+  shifter1.stop();
+  shifter2.stop();
+  driveDist(100, 100);
+  driveDist(-100, 100);
+
+  // wait for ghost tray to fall
+  wait(200, timeUnits::msec);
 
   // intake first cube
-  runRollers(50);
-  driveDist(1200, 100);
+  driveDistRollers(1200, 600, 1000);
   rollerStop();
 
   // second cube
   gyroTurnTo(90);
-  driveDistRollers(1000, 100, 500);
+  driveDistRollers(1000, 100, 800);
   rollerStop();
 
   // third cube
-  gyroTurnTo(-10);
-  driveDistRollers(1500, 100, 925);
+  gyroTurnTo(98);
+  driveDistRollers(600, 80, 250);
+  wait(300, msec);
   rollerStop();
 
-  // go to zone
-  driveDist(-1000, 100);
-  gyroTurnTo(140);
-  driveDist(940, 100);
-
-  // place stack
-  while (fabs(shifterUp - shifterPot.value(vex::analogUnits::range12bit)) >=
-         30) {
-    shifter1.spin(directionType::fwd, shifterStackSpeed(), velocityUnits::pct);
-    shifter2.spin(directionType::fwd, shifterStackSpeed(), velocityUnits::pct);
+  // stack
+  gyroTurnTo(-110);
+  driveDist(1650, 100);
+  int autonDistanceError =
+      shifterUp - shifterPot.value(vex::analogUnits::range12bit);
+  while (autonDistanceError >= 30) {
+    int autonShifterPIDSpeed =
+        shifterStackSpeed() * 1.5; // Faster because less cubes in auton
+    autonDistanceError =
+        shifterUp - shifterPot.value(vex::analogUnits::range12bit);
+    shifter1.spin(fwd, autonShifterPIDSpeed, pct);
+    shifter2.spin(fwd, autonShifterPIDSpeed, pct);
   }
-  driveDist(-1000, 100);
+  shifter1.stop();
+  shifter2.stop();
+  wait(200, msec);
+  rollerExtake();
+  driveDist(-500, 100);
 }
+
+
+
+void progSkills() {}
+
+
+
+void oneCubePush() {}
+
+
+
+void blueProtected() {
+  if (!gyroCalibrated) {
+    gyroscope.calibrate();
+    while (gyroscope.isCalibrating()) {
+      wait(100, msec);
+    }
+  }
+  // flip out tray
+  rollerExtake();
+  wait(300, timeUnits::msec);
+  rollerStop();
+  shifter1.spin(fwd);
+  shifter2.spin(fwd);
+  wait(1000, msec);
+  shifter1.stop();
+  shifter2.stop();
+  driveDist(100, 100);
+  driveDist(-100, 100);
+
+  // wait for ghost tray to fall
+  wait(200, timeUnits::msec);
+
+  // intake first cube
+  driveDistRollers(1200, 600, 1000);
+  rollerStop();
+
+  // second cube
+  gyroTurnTo(-90);
+  driveDistRollers(1000, 100, 800);
+  rollerStop();
+
+  // third cube
+  gyroTurnTo(-98);
+  driveDistRollers(600, 80, 250);
+  wait(300, msec);
+  rollerStop();
+
+  // stack
+  gyroTurnTo(110);
+  driveDist(1650, 100);
+  int autonDistanceError =
+      shifterUp - shifterPot.value(vex::analogUnits::range12bit);
+  while (autonDistanceError >= 30) {
+    int autonShifterPIDSpeed =
+        shifterStackSpeed() * 1.5; // Faster because less cubes in auton
+    autonDistanceError =
+        shifterUp - shifterPot.value(vex::analogUnits::range12bit);
+    shifter1.spin(fwd, autonShifterPIDSpeed, pct);
+    shifter2.spin(fwd, autonShifterPIDSpeed, pct);
+  }
+  shifter1.stop();
+  shifter2.stop();
+  wait(200, msec);
+  rollerExtake();
+  driveDist(-500, 100);
+}
+
 void autonomous(void) {
   /*
   Important stuff:
@@ -688,12 +850,32 @@ void autonomous(void) {
   THE OTHER ALREADY DOWNLOADED PROGRAM FOR DRIVER PRACTICE SHIFTER CODE NOT
   IMPLEMENTED
   */
-  if (!gyroCalibrated) {
-    gyroscope.calibrate();
-    while (gyroscope.isCalibrating()) {
-      wait(10, msec);
-    }
+
+  blueProtected();
+  // 0 = Prog, 1 = Blue protected, 2 = Blue unprotected, 3 =
+  // Red Protected, 4 = Red unprotected, 5 = One cube push
+  /**
+  switch (currAutonID) {
+  case 0:
+    progSkills();
+    break;
+  case 1:
+    blueProtected();
+    break;
+  case 2:
+    blueUnprotected();
+    break;
+  case 3:
+    redProtected();
+    break;
+  case 4:
+    redUnprotected();
+    break;
+  case 5:
+    oneCubePush();
+    break;
   }
+  **/
 }
 
 /*---------------------------------------------------------------------------*/
@@ -702,39 +884,56 @@ void autonomous(void) {
 
 void usercontrol(void) {
   while (1) {
-    controllerDrive();
-    if (controller1.ButtonL1.pressing()) {
+    if (controller2.ButtonL1.pressing()) {
+      rollerIntake();
+    } else if (controller2.ButtonL2.pressing()) {
+      rollerExtake();
+    } else if (controller1.ButtonL1.pressing()) {
       rollerIntake();
     } else if (controller1.ButtonL2.pressing()) {
       rollerExtake();
     } else {
       rollerStop();
     }
-
-    if (controller1.ButtonUp.pressing()) {
-      autoStack();
-    } else if (controller1.ButtonDown.pressing()) {
-      if(shifterPot.value(analogUnits::range12bit) > shifterDown){
-        manualShifterDown();
-      }
-    } else if (controller1.ButtonB.pressing()) {
-      autonShifterDown();
-    }
-
-    else {
-      shifterHold();
-    }
-
-    if (controller1.ButtonR1.pressing()) {
-      lift(100);
+    if (controller2.ButtonR1.pressing()) {
+      manualLiftUp();
+    } else if (controller2.ButtonR2.pressing()) {
+      manualLiftDown();
+    } else if (controller1.ButtonR1.pressing()) {
+      manualLiftUp();
     } else if (controller1.ButtonR2.pressing()) {
-      lift(-100);
+      manualLiftDown();
     } else {
       liftHold();
     }
+
+    if (controller2.ButtonY.pressing()) {
+      slowDrive();
+    } else {
+      controllerDrive();
+    }
+
+    if (controller1.ButtonUp.pressing() || controller2.ButtonUp.pressing()) {
+      autoStack();
+    } else if (controller1.ButtonDown.pressing()) {
+      if (shifterPot.value(analogUnits::range12bit) > shifterDown) {
+        manualShifterDown();
+      } else {
+        shifterHold();
+      }
+
+    } else if (controller2.ButtonB.pressing()) {
+      if (shifterPot.value(range12bit) < 1390) {
+        autoStack();
+      } else if (shifterPot.value(range12bit) > 1410) {
+        manualShifterDown();
+      }
+    } else {
+      shifterHold();
+    }
+
     if (controller1.ButtonA.pressing()) {
-      gyroTurnTo(90);
-      driveDist(1000, 100);
+      blueProtected();
     }
   }
 }
