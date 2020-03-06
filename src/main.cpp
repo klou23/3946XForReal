@@ -874,12 +874,12 @@ void redUnprotectedLarge(){
     }
   }
   // flip out tray
+  shifter1.spin(fwd);
+  shifter2.spin(fwd);
   rollerExtake();
   wait(300, timeUnits::msec);
   rollerStop();
-  shifter1.spin(fwd);
-  shifter2.spin(fwd);
-  wait(1000, msec);
+  wait(700, msec);
   shifter1.stop();
   shifter2.stop();
   driveDist(100, 100);
@@ -895,17 +895,17 @@ void redUnprotectedLarge(){
   driveDist(-1850, 100);
   // Turn and intake large line
   gyroTurnTo(0);
-  driveDistRollers(2000, 57,200);
+  driveDistRollers(1800, 57,100);
   rollerStop();
 
   //Turn towards goal zone
   gyroTurnTo(150);
-  driveDist(1800, 100);
+  driveDist(1750, 100);
   int autonDistanceError =
       shifterUp - shifterPot.value(vex::analogUnits::range12bit);
-  while (autonDistanceError >= 30) {
+  while (autonDistanceError >= 150) {
     int autonShifterPIDSpeed =
-        shifterStackSpeed() * 1.9; // Faster because less cubes in auton
+        shifterStackSpeed() * 1.8; // Faster because less cubes in auton
     autonDistanceError =
         shifterUp - shifterPot.value(vex::analogUnits::range12bit);
     shifter1.spin(fwd, autonShifterPIDSpeed, pct);
