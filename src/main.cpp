@@ -116,6 +116,7 @@ void driveDistRollers(float amount, float speed, float rollerDelay = 0) {
   driveHold();
 }
 void slowDrive(void) {
+  //need to add sensitive zone
   if (!controller2.ButtonX.pressing()) {
     leftDriveSpeed = controller1.Axis3.value() * .5;
     rightDriveSpeed = controller1.Axis2.value() * .5;
@@ -127,6 +128,7 @@ void slowDrive(void) {
   }
 }
 void controllerDrive(void) {
+  //need to add sensitive zone
   if (!controller2.ButtonX.pressing()) {
     leftDriveSpeed = controller1.Axis3.value();
     rightDriveSpeed = controller1.Axis2.value();
