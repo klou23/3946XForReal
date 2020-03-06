@@ -129,7 +129,6 @@ void slowDrive(void) {
 }
 void controllerDrive(void) {
   if (!controller2.ButtonX.pressing()) {
-    leftDriveSpeed = (int) (pow(controller1.Axis3.value(), 2)/100);
     leftDriveSpeed = (int) (pow(controller1.Axis3.value(), 2)/100 * controller1.Axis3.value()/(abs(controller1.Axis3.value()) + 0.01));
     rightDriveSpeed = (int) (pow(controller1.Axis2.value(),2)/100 * controller1.Axis2.value()/(abs(controller1.Axis2.value()) + 0.01));
     rightDrive.spin(directionType::fwd, rightDriveSpeed, velocityUnits::pct);
