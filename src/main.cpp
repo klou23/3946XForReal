@@ -892,7 +892,7 @@ void redUnprotectedLarge(){
   rollerStop();
 
   // Turn to back up towards large line
-  gyroTurnTo(-33);
+  gyroTurnTo(-35);
   driveDist(-1850, 100);
   // Turn and intake large line
   gyroTurnTo(0);
@@ -901,7 +901,7 @@ void redUnprotectedLarge(){
   rollerStop();
 
   //Turn towards goal zone
-  gyroTurnTo(144);
+  gyroTurnTo(148);
   shifter1.spin(fwd, 15, pct);
   shifter2.spin(fwd, 15, pct);
   driveDist(1530, 100);
