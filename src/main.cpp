@@ -100,6 +100,7 @@ void driveDist(float amount, float speed) {
                        false);
   leftDrive.rotateFor(amount, rotationUnits::deg, speed, velocityUnits::pct);
 }
+
 void clearDriveSensors(){
   leftDrive.resetPosition();
   rightDrive.resetPosition();
@@ -895,22 +896,23 @@ void redUnprotectedLarge(){
   driveDist(-1850, 100);
   // Turn and intake large line
   gyroTurnTo(0);
-  driveDistRollers(1800, 50,100);
+  driveDistRollers(1700, 50,100);
   wait(200, msec);
   rollerStop();
 
   //Turn towards goal zone
-  gyroTurnTo(146);
-  shifter1.spin(fwd, 20, pct);
-  shifter2.spin(fwd, 20, pct);
-  driveDist(1680, 100);
+  gyroTurnTo(144);
+  shifter1.spin(fwd, 15, pct);
+  shifter2.spin(fwd, 15, pct);
+  driveDist(1530, 100);
+  
   shifter1.stop();
   shifter2.stop();
   int autonDistanceError =
       shifterUp - shifterPot.value(vex::analogUnits::range12bit);
   while (autonDistanceError >= 150) {
     int autonShifterPIDSpeed =
-        shifterStackSpeed() * 1.8; // Faster because less cubes in auton
+        shifterStackSpeed() * 1.6; // Faster because less cubes in auton
     autonDistanceError =
         shifterUp - shifterPot.value(vex::analogUnits::range12bit);
     shifter1.spin(fwd, autonShifterPIDSpeed, pct);
