@@ -884,10 +884,9 @@ void redUnprotectedLarge(){
   shifter1.stop();
   shifter2.stop();
   driveDist(100, 100);
-  driveDist(-100, 100);
 
   // Intake first line
-  driveDistRollers(1750, 65, 300);
+  driveDistRollers(1650, 65, 200);
   wait(400, msec);
   rollerStop();
 
@@ -896,12 +895,17 @@ void redUnprotectedLarge(){
   driveDist(-1850, 100);
   // Turn and intake large line
   gyroTurnTo(0);
-  driveDistRollers(1800, 57,100);
+  driveDistRollers(1800, 50,100);
+  wait(200, msec);
   rollerStop();
 
   //Turn towards goal zone
-  gyroTurnTo(150);
-  driveDist(1750, 100);
+  gyroTurnTo(146);
+  shifter1.spin(fwd, 20, pct);
+  shifter2.spin(fwd, 20, pct);
+  driveDist(1680, 100);
+  shifter1.stop();
+  shifter2.stop();
   int autonDistanceError =
       shifterUp - shifterPot.value(vex::analogUnits::range12bit);
   while (autonDistanceError >= 150) {
@@ -914,8 +918,9 @@ void redUnprotectedLarge(){
   }
   shifter1.stop();
   shifter2.stop();
-  wait(200, msec);
   rollerExtake();
+  wait(100, msec);
+  rollerStop();
   driveDist(-500, 100);
 }
 void redUnprotectedSafe() {
