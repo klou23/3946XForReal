@@ -888,13 +888,13 @@ void redUnprotected() {
   rollerStop();
 
   // Turn to drive back 
-  gyroTurnTo(-50.5);
+  gyroTurnTo(-45);
 
   // Drive back to intake second line
   driveDist(-1600, 100);
 
   // Turn to realign with line
-  gyroTurnTo(-2);
+  gyroTurnTo(0);
 
   // Intake second line
   driveDistRollers(1900, 65, 1000);
@@ -905,7 +905,7 @@ void redUnprotected() {
   driveDist(-1200, 100);
 
   // turn to face goal zone
-  gyroTurnTo(135);
+  gyroTurnTo(134);
 
   // drive to goal zone
   driveDist(1000, 100);
@@ -936,11 +936,12 @@ void progSkills() {}
 void oneCubePush() {}
 
 void autonomous(void) {
+  redUnprotected();
 
   // 0 = Prog, 1 = Blue protected, 2 = Blue unprotected, 3 =
   // Red Protected, 4 = Red unprotected, 5 = One cube push
 
-  if (currAutonID == 0) {
+  /**if (currAutonID == 0) {
     progSkills();
   } else if (currAutonID == 1) {
     blueProtected();
@@ -954,8 +955,9 @@ void autonomous(void) {
     oneCubePush();
   } else {
     wait(100, msec); // Do nothing
-  }
+  }**/
 }
+
 
 /*---------------------------------------------------------------------------*/
 /*                              User Control Task */
