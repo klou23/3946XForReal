@@ -67,6 +67,11 @@ void rollerStop() {
   leftRoller.stop(hold);
   rightRoller.stop(hold);
 }
+void driveHold() {
+
+  rightDrive.stop(hold);
+  leftDrive.stop(hold);
+}
 float angleSub(float deg1, float deg2) {
   float dist = deg1 - deg2;
   return fmod((dist + 180), 360) - 180;
@@ -95,19 +100,20 @@ void driveDist(float amount, float speed) {
                        false);
   leftDrive.rotateFor(amount, rotationUnits::deg, speed, velocityUnits::pct);
 }
+void clearDriveSensors(){
+  leftDrive.resetPosition();
+  rightDrive.resetPosition();
+}
 void driveDistRollers(float amount, float speed, float rollerDelay = 0) {
-  rightDrive.setRotation(0, deg);
-  leftDrive.setRotation(0, deg);
-  rightDrive.startRotateFor(amount, rotationUnits::deg, speed,
-                            velocityUnits::pct);
-  leftDrive.startRotateFor(amount, rotationUnits::deg, speed,
-                           velocityUnits::pct);
-
-  while (!rightDrive.isDone() || !leftDrive.isDone()) {
-    if (rollerDelay > rightDrive.rotation(deg)) {
+  clearDriveSensors();
+  while((rightDrive.position(deg) + leftDrive.rotation(deg)) /2 < amount){
+    rightDrive.spin(fwd,speed,pct);
+    leftDrive.spin(fwd,speed,pct);
+    if((rightDrive.position(deg) + leftDrive.rotation(deg)) /2 > rollerDelay){
       rollerIntake();
     }
   }
+  driveHold();
 }
 void slowDrive(void) {
   if (!controller2.ButtonX.pressing()) {
@@ -212,11 +218,7 @@ void liftHold(void) {
   leftLift.stop(hold);
   rightLift.stop(hold);
 }
-void driveHold() {
 
-  rightDrive.stop(hold);
-  leftDrive.stop(hold);
-}
 void gyroTurnTo(double amount) {
   float lastYaw = 0;
   int timeInZone = 0;
@@ -686,15 +688,10 @@ void pre_auton(void) {
 /*                              Autonomous Tasks */
 /*---------------------------------------------------------------------------*/
 void redProtected() {
-  if (!gyroCalibrated) {
-    gyroscope.calibrate();
-    while (gyroscope.isCalibrating()) {
-      wait(100, msec);
-    }
-  }
+  
   // flip out tray
   rollerExtake();
-  wait(300, timeUnits::msec);
+  wait(200, timeUnits::msec);
   rollerStop();
   shifter1.spin(fwd);
   shifter2.spin(fwd);
@@ -707,24 +704,30 @@ void redProtected() {
   // wait for ghost tray to fall
   wait(200, timeUnits::msec);
 
-  // intake first cube
-  driveDistRollers(1200, 600, 1000);
-  rollerStop();
-
-  // second cube
-  gyroTurnTo(90);
-  driveDistRollers(1000, 100, 800);
+  // intake second cube
+  driveDistRollers(800, 100, 200);
+  wait(300,msec);
   rollerStop();
 
   // third cube
-  gyroTurnTo(98);
-  driveDistRollers(600, 80, 250);
-  wait(300, msec);
+  driveDist(300, 100);
+  gyroTurnTo(90);
+  driveDistRollers(700, 100, 400);
+  wait(300,msec);
+  rollerStop();
+
+  // fourth cube
+  gyroTurnTo(93);
+  driveDistRollers(850, 100, 300);
+  wait(600, msec);
   rollerStop();
 
   // stack
   gyroTurnTo(-110);
-  driveDist(1650, 100);
+  rollerExtake();
+  wait(400,msec);
+  rollerStop();
+  driveDist(1700, 100);
   int autonDistanceError =
       shifterUp - shifterPot.value(vex::analogUnits::range12bit);
   while (autonDistanceError >= 30) {
@@ -738,20 +741,15 @@ void redProtected() {
   shifter1.stop();
   shifter2.stop();
   wait(200, msec);
-  rollerExtake();
+  runRollers(-20);
   driveDist(-500, 100);
 }
 
 void blueProtected() {
-  if (!gyroCalibrated) {
-    gyroscope.calibrate();
-    while (gyroscope.isCalibrating()) {
-      wait(100, msec);
-    }
-  }
+  
   // flip out tray
   rollerExtake();
-  wait(300, timeUnits::msec);
+  wait(200, timeUnits::msec);
   rollerStop();
   shifter1.spin(fwd);
   shifter2.spin(fwd);
@@ -764,24 +762,30 @@ void blueProtected() {
   // wait for ghost tray to fall
   wait(200, timeUnits::msec);
 
-  // intake first cube
-  driveDistRollers(1200, 600, 1000);
-  rollerStop();
-
-  // second cube
-  gyroTurnTo(-90);
-  driveDistRollers(1000, 100, 800);
+  // intake second cube
+  driveDistRollers(800, 100, 200);
+  wait(300,msec);
   rollerStop();
 
   // third cube
-  gyroTurnTo(-98);
-  driveDistRollers(600, 80, 250);
-  wait(300, msec);
+  driveDist(300, 100);
+  gyroTurnTo(-90);
+  driveDistRollers(700, 100, 400);
+  wait(300,msec);
+  rollerStop();
+
+  // fourth cube
+  gyroTurnTo(-93);
+  driveDistRollers(850, 100, 300);
+  wait(600, msec);
   rollerStop();
 
   // stack
-  gyroTurnTo(110);
-  driveDist(1650, 100);
+  gyroTurnTo(-110);
+  rollerExtake();
+  wait(400,msec);
+  rollerStop();
+  driveDist(1700, 100);
   int autonDistanceError =
       shifterUp - shifterPot.value(vex::analogUnits::range12bit);
   while (autonDistanceError >= 30) {
@@ -795,7 +799,7 @@ void blueProtected() {
   shifter1.stop();
   shifter2.stop();
   wait(200, msec);
-  rollerExtake();
+  runRollers(-20);
   driveDist(-500, 100);
 }
 
@@ -862,8 +866,7 @@ void blueUnprotected() {
   rollerExtake();
   driveDist(-500, 100);
 }
-
-void redUnprotected() {
+void redUnprotectedLarge(){
   if (!gyroCalibrated) {
     gyroscope.calibrate();
     while (gyroscope.isCalibrating()) {
@@ -883,42 +886,26 @@ void redUnprotected() {
   driveDist(-100, 100);
 
   // Intake first line
-  driveDistRollers(1450, 80, 400);
+  driveDistRollers(1750, 65, 300);
   wait(400, msec);
   rollerStop();
 
-  // Turn to drive back 
-  gyroTurnTo(-45);
-
-  // Drive back to intake second line
-  driveDist(-1600, 100);
-
-  // Turn to realign with line
+  // Turn to back up towards large line
+  gyroTurnTo(-33);
+  driveDist(-1850, 100);
+  // Turn and intake large line
   gyroTurnTo(0);
-
-  // Intake second line
-  driveDistRollers(1900, 65, 1000);
-  wait(400, msec);
+  driveDistRollers(2000, 57,200);
   rollerStop();
 
-  // Drive back to get ready to turn and stack
-  driveDist(-1200, 100);
-
-  // turn to face goal zone
-  gyroTurnTo(134);
-
-  // drive to goal zone
-  driveDist(1000, 100);
-
-  // stack
-  rollerExtake();
-  wait(100, msec);
-  rollerStop();
+  //Turn towards goal zone
+  gyroTurnTo(150);
+  driveDist(1800, 100);
   int autonDistanceError =
       shifterUp - shifterPot.value(vex::analogUnits::range12bit);
   while (autonDistanceError >= 30) {
     int autonShifterPIDSpeed =
-        shifterStackSpeed() * 1.4; // Faster because less cubes in auton
+        shifterStackSpeed() * 1.9; // Faster because less cubes in auton
     autonDistanceError =
         shifterUp - shifterPot.value(vex::analogUnits::range12bit);
     shifter1.spin(fwd, autonShifterPIDSpeed, pct);
@@ -927,8 +914,65 @@ void redUnprotected() {
   shifter1.stop();
   shifter2.stop();
   wait(200, msec);
+  rollerExtake();
   driveDist(-500, 100);
+}
+void redUnprotectedSafe() {
+  if (!gyroCalibrated) {
+    gyroscope.calibrate();
+    while (gyroscope.isCalibrating()) {
+      wait(100, msec);
+    }
+  }
+  // flip out tray
+  rollerExtake();
+  wait(300, timeUnits::msec);
   rollerStop();
+  shifter1.spin(fwd);
+  shifter2.spin(fwd);
+  wait(1000, msec);
+  shifter1.stop();
+  shifter2.stop();
+  driveDist(100, 100);
+  driveDist(-100, 100);
+
+  // Intake first line
+  driveDistRollers(1750, 65, 300);
+  wait(400, msec);
+  rollerStop();
+
+  // Turn to face goblet cube 
+  gyroTurnTo(-15);
+
+  // Drive to intake goblet cube
+  driveDistRollers(850,70,200);
+  wait(200, msec);
+  rollerStop();
+
+  // drive back
+  driveDist(-600, 100);
+
+  // turn to face goal zone
+  gyroTurnTo(147);
+
+  // Drive to goal zone
+  driveDist(1400, 100);
+
+  int autonDistanceError =
+      shifterUp - shifterPot.value(vex::analogUnits::range12bit);
+  while (autonDistanceError >= 30) {
+    int autonShifterPIDSpeed =
+        shifterStackSpeed() * 1.7; // Faster because less cubes in auton
+    autonDistanceError =
+        shifterUp - shifterPot.value(vex::analogUnits::range12bit);
+    shifter1.spin(fwd, autonShifterPIDSpeed, pct);
+    shifter2.spin(fwd, autonShifterPIDSpeed, pct);
+  }
+  shifter1.stop();
+  shifter2.stop();
+  wait(200, msec);
+  rollerExtake();
+  driveDist(-500, 100);
 }
 
 void progSkills() {}
@@ -936,7 +980,7 @@ void progSkills() {}
 void oneCubePush() {}
 
 void autonomous(void) {
-  redUnprotected();
+  redUnprotectedLarge();
 
   // 0 = Prog, 1 = Blue protected, 2 = Blue unprotected, 3 =
   // Red Protected, 4 = Red unprotected, 5 = One cube push
@@ -1015,7 +1059,7 @@ void usercontrol(void) {
     }
 
     if (controller1.ButtonA.pressing()) {
-      redUnprotected();
+      redUnprotectedLarge();
     } else {
       wait(100, msec); // Do nothing
     }
