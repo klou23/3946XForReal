@@ -128,10 +128,9 @@ void slowDrive(void) {
   }
 }
 void controllerDrive(void) {
-  //need to add sensitive zone
   if (!controller2.ButtonX.pressing()) {
-    leftDriveSpeed = controller1.Axis3.value();
-    rightDriveSpeed = controller1.Axis2.value();
+    leftDriveSpeed = (int) (pow(controller1.Axis3.value(), 2)/100);
+    rightDriveSpeed = (int) (pow(controller1.Axis2.value(),2)/100);
     rightDrive.spin(directionType::fwd, rightDriveSpeed, velocityUnits::pct);
     leftDrive.spin(directionType::fwd, leftDriveSpeed, velocityUnits::pct);
   } else {
