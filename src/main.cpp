@@ -783,7 +783,7 @@ void blueProtected() {
   rollerStop();
 
   // stack
-  gyroTurnTo(-110);
+  gyroTurnTo(110);
   rollerExtake();
   wait(400,msec);
   rollerStop();
@@ -901,16 +901,19 @@ void redUnprotectedLarge(){
   rollerStop();
 
   //Turn towards goal zone
-  gyroTurnTo(148);
-  shifter1.spin(fwd, 15, pct);
-  shifter2.spin(fwd, 15, pct);
+  gyroKp = 1.5;
+  gyroTurnTo(145);
+  shifter1.spin(fwd, 12, pct);
+  shifter2.spin(fwd, 12, pct);
   driveDist(1530, 100);
-  
-  shifter1.stop();
-  shifter2.stop();
+  gyroKp = 1.4;
+  rollerExtake();
+  wait(100, msec);
+  rollerStop();
+
   int autonDistanceError =
       shifterUp - shifterPot.value(vex::analogUnits::range12bit);
-  while (autonDistanceError >= 150) {
+  while (autonDistanceError >= 30) {
     int autonShifterPIDSpeed =
         shifterStackSpeed() * 1.6; // Faster because less cubes in auton
     autonDistanceError =
@@ -921,9 +924,9 @@ void redUnprotectedLarge(){
   shifter1.stop();
   shifter2.stop();
   rollerExtake();
-  wait(100, msec);
+  wait(400, msec);
   rollerStop();
-  driveDist(-500, 100);
+  driveDist(-300, 100);
 }
 void redUnprotectedSafe() {
   if (!gyroCalibrated) {
@@ -1067,7 +1070,7 @@ void usercontrol(void) {
     }
 
     if (controller1.ButtonA.pressing()) {
-      redUnprotectedLarge();
+      blueProtected();
     } else {
       wait(100, msec); // Do nothing
     }
